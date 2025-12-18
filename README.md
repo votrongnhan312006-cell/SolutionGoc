@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 `# Get Database
 
 Scaffold-DbContext "Data Source=6pg.org,1433; Initial Catalogs=dbLLKH; User ID=nghiand;Password=@NangHaNoi2020@" Microsoft.EntityFrameworkCore.SqlServer -OutputDir tmp -DataAnnotations -f -UseDatabaseNames
@@ -16,3 +17,6 @@ optionsBuilder.UseSqlServer(configuration.GetConnectionString("DBConnection"));
 }
 }
 `
+=======
+# SolutionGoc
+>>>>>>> 947844cb33eab12e35454889d96eb520d43d1f22
