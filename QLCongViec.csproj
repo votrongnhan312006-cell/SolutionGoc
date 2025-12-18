@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+<TargetFramework>net8.0</TargetFramework>
+<Nullable>enable</Nullable>
+<ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+<PackageReference Include="AutoMapper" Version="12.0.1" />
+<PackageReference Include="Cake.Powershell" Version="4.0.0" />
+<PackageReference Include="itext7" Version="9.0.0" />
+<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.17" />
+<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.11">
+  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+  <PrivateAssets>all</PrivateAssets>
+</PackageReference>
+<PackageReference Include="Minio" Version="6.0.0" />
+<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+<PackageReference Include="Radzen.Blazor" Version="8.2.1" />
+<PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.10" />
+	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+   <ItemGroup>
+<Folder Include="Components\FeedbackUI\" />
+<Folder Include="wwwroot\SaveFile\" />
+  </ItemGroup>
+   <ItemGroup>
+ <Reference Include="IDC.BlazorUi.Components">
+   <HintPath>Idc.Libs\IDC.BlazorUi.Components.dll</HintPath>
+ </Reference>
+ <Reference Include="IDC.Frontend.Service">
+   <HintPath>Idc.Libs\IDC.Frontend.Service.dll</HintPath>
+ </Reference>
+   </ItemGroup>
+   <ItemGroup>
+ <Content Update="Components\Waiting.razor">
+   <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+ </Content>
+   </ItemGroup>
+
+
+
+</Project>

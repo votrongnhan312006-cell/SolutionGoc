@@ -1,0 +1,65 @@
+@page "/admin/QLTaiKhoan"
+@using IDC.BlazorUi.Components.Components
+@using IDC.Frontend.Services
+@using QLCongViec.Components
+@using QLCongViec.Models.HeThong
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ClientServices client
+
+<style>
+.rz-label {
+margin-bottom: 0;
+font-weight: bold;
+}
+
+.rz-column-title-content {
+font-weight: bold;
+}
+</style>
+
+<TableAPI @ref=grd TItem="tbSystemUser" 
+  TableTitle=@tableTitle
+  FormTitle=@formTitle
+  OnDelete="@(args => Delete((tbSystemUser)args))" 
+  OnAdd="@(args => Add((tbSystemUser)args))" 
+  AddNew=true isSearch=false ShowClose=true>
+<MoreColumns>
+<RadzenDataGridColumn TItem="tbSystemUser" Title="Tên tài khoản" TextAlign="TextAlign.Left" Sortable="false"
+  Width="200px" Property="UserName" Frozen="true">
+</RadzenDataGridColumn>
+<RadzenDataGridColumn TItem="tbSystemUser" Title="Họ và tên người dùng" TextAlign="TextAlign.Left" Sortable="false"
+  Width="100%" Property="FullName" Frozen="true">
+</RadzenDataGridColumn>
+</MoreColumns>
+<FormDialog Context="ctx">
+ 
+<QLTaiKhoan_Detail Record="ctx"  />
+</FormDialog>
+</TableAPI>
+@code {
+TableAPI<tbSystemUser> grd;
+string query=default!;
+
+string tableTitle = "DANH SÁCH NHÓM NGƯỜI DÙNG";
+string formTitle = "THÔNG TIN NHÓM NGƯỜI DÙNG";
+
+string? lamda=null;
+protected async Task Delete(tbSystemUser record)
+{
+try
+{
+lamda = "IdUser=={record.IdUser}";
+await client.apiSevices.Delete<tbSystemUser>(lamda);
+await grd.Refresh();
+}
+catch
+{
+//notificationService.Notify(NotificationSeverity.Error, $"Lỗi khi xoá dữ liệu", duration: -1);
+}
+}
+protected async Task Add(tbSystemUser record)
+{
+await grd.Refresh();
+}
+}

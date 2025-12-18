@@ -1,0 +1,149 @@
+@page "/login"
+@page "/"
+@layout LoginLayout
+@using IDC.Frontend.Services.ApiService
+@using IDC.Frontend.Services.AuthServices
+@using IDC.Frontend.Services
+@using QLCongViec.Services
+@using QLCongViec.Models
+@inject NavigationManager UriHelper
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider authStateProvider
+@inject ApiServices apiServices
+@inject ClientServices client
+@inject AuthenServices authServices
+@using QLCongViec.Dto.Nguoi
+@using QLCongViec.Shared
+
+<PageTitle>Đăng nhập hệ thống</PageTitle>
+<AuthorizeView>
+    <Authorized>
+        <RedirectToHome />
+    </Authorized>
+    <NotAuthorized>
+        <div class="login min-vh-100 sm:py-16 bg-secondary-100 flex-column">
+            <div class="row justify-content-center align-items-center">
+                <div class="col-6" style="width: 45%">
+                    <div class="card shadow-2-strong" style="border-radius: 0.5rem">
+                        <div class="card-body p-8">
+                            <div style="display: flex; align-items: center; justify-content: center">
+                                <img src="logo.png"
+                                     style="height:90px;width:auto; margin: 20 20 20 0; padding-right: 30px;" />
+                                <div class="text-center">
+                                    <strong style="font-size: 1.8rem; margin-left:-20px;  color: #112572">HỆ THỐNG QUẢN LÝ CÔNG VIỆC</strong>
+
+                                </div>
+                            </div>
+                            <div style="margin-left: 2rem; margin-right: 1.7rem">
+                                <RadzenTemplateForm TItem="tbUser" Data=@user Submit="@Authenticate1">
+                                    <ChildContent Context="ctx">
+                                        <RadzenFormField style="width: 100%; margin-top: 1.5rem" Text="Tên tài khoản">
+                                            <Start>
+                                                <RadzenIcon Icon="account_circle" />
+                                            </Start>
+                                            <ChildContent>
+                                                <RadzenTextBox @bind-Value="@username" />
+                                            </ChildContent>
+                                        </RadzenFormField>
+                                        <RadzenFormField style="width: 100%; margin-top:1.5rem" Text="Mật khẩu">
+                                            <Start>
+                                                <RadzenIcon Icon="lock" />
+                                            </Start>
+                                            <ChildContent>
+                                                <RadzenTextBox @bind-Value="@passwordValue"
+                                                               Visible="@(!viewPassword)" />
+                                                <RadzenPassword @bind-Value="@passwordValue" Visible="@viewPassword" />
+                                            </ChildContent>
+                                            <End>
+                                                <RadzenButton Icon="@(viewPassword ? "visibility" : "visibility_off")"
+                                                              Click="TogglePassword" Variant="Variant.Text"
+                                                              Size="ButtonSize.Small" />
+                                            </End>
+                                        </RadzenFormField>
+                                        <div style="margin-top: 1.5rem">
+                                            <RadzenCheckBox @bind-Value=@value Name="save_login" />
+                                            <RadzenLabel Text="Ghi nhớ đăng nhập" Component="save_login"
+                                                         Style="margin-left: 8px; vertical-align: middle;" />
+                                        </div>
+                                        <RadzenButton style="margin-top: 1.5rem; width: 100%; background-color:#112572 "
+                                                      class="rz-info-darker" Text="Đăng nhập" ButtonType="ButtonType.Submit">
+                                        </RadzenButton>
+                                    </ChildContent>
+
+                                </RadzenTemplateForm>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    string passwordValue = "";
+    bool value;
+    bool viewPassword = true;
+    string token = "";
+    public string username { get; set; } = "nghiand";
+    bool isLoading = false;
+    tbUser user = new tbUser();
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+
+        //Lấy tham số username từ url truyền vào
+        var uri = new Uri(UriHelper.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var token = queryParams["token"];
+        //token = "089471993563a32864fbab2028cbb900";
+        List<tbSessionLogin> sessionLogin = new List<tbSessionLogin>();
+        string lamda;
+        if (token != null)
+        {
+            lamda = $"p => p.Token==\"{token}\"";
+            sessionLogin = await client.apiSevices.GetAll<tbSessionLogin>(lamda);
+        }
+
+        if (sessionLogin?.Count > 0)//&& param.ExpireAt > DateTime.UtcNow
+        {
+            username = sessionLogin[0].Value;
+
+            //xóa phiên đăng nhập của người dùng
+            await client.apiSevices.Delete<tbSessionLogin>(sessionLogin);
+        }
+
+
+
+        isLoading = false;
+    }
+    void TogglePassword()
+    {
+        viewPassword = !viewPassword;
+    }
+
+    async Task Authenticate1()
+    {
+        string? userToken = await client.authServices.Authenticate<tbUser>(username, passwordValue);
+
+        if (!String.IsNullOrEmpty(userToken))
+        {
+            var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+            await customAuthStateProvider.UpdateAuthenticationState($"{userToken}", value ? "local" : "session");
+            UriHelper.NavigateTo("/home");
+        }
+        else
+        {
+            notificationService.Notify(NotificationSeverity.Error, $"Thông báo:", "Kiểm tra lại tên người dùng", duration: -1);
+        }
+    }
+    public class LoginReq
+    {
+        public string username { get; set; } = "";
+        public string password { get; set; } = "";
+    }
+}

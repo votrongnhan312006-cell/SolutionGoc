@@ -1,0 +1,198 @@
+@page "/VanBanDen"
+@using QLCongViec.Components
+
+@using QLCongViec.Models
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+@inject AuthenServices authenService
+
+<style>
+    .rz-label {
+        margin-bottom: 0;
+        font-weight: bold;
+    }
+
+    .rz-column-title-content {
+        font-weight: bold;
+    }
+
+    p {
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<style>
+    .search-container {
+        border: 1px solid #ddd;
+        padding: 10px 18px 1px 18px; /* padding dưới nhỏ lại */
+        border-radius: 0px;
+        background-color: #f9f9f9;
+        margin-bottom: 0px;
+    }
+
+        .search-container .row {
+            margin-bottom: 0px; /* các hàng sát nhau */
+        }
+
+            .search-container .row:last-child {
+                margin-bottom: 8px !important;
+            }
+
+        .search-container .col-12:last-child,
+        .search-container .d-flex:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+    .action-bar {
+        background: #e9ecef; /* Nền đậm, nổi bật */
+        padding: 8px 8px;
+        border-radius: 0px;
+        margin-bottom: 0px;
+        border: 1px solid #ddd;
+        border-top: none;
+    }
+
+        .action-bar .rz-button {
+            font-size: 15px;
+            /*  font-weight: bold; */
+            border-radius: 6px;
+        }
+</style>
+<Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+<TableAPI @ref=grd TItem="tbVanBanDen"
+          TableTitle="VĂN BẢN ĐẾN"
+          FormTitle="THÔNG TIN CÔNG VIỆC"
+          filter=@lamda_table
+          OnDelete="@(args => Delete((tbVanBanDen)args))"
+          DeleteFunction="true"
+          AddNew=true isSearch=true ShowClose=true
+          OperationsSTTWidth="50px" OperationColumnWidth="60px">
+    @* <AddMore>
+    <div class="search-container">
+    <div class="row align-items-end mb-0">
+    <div class="col-md-6 mb-2">
+    <RadzenTextBox @bind-Value=@searchTenCongViec
+    @onkeyup=@(args => SearchInputKeyPressed(args))
+    Placeholder="Nhập tên công việc..."
+    Style="width: 100%;" />
+    </div>
+    <div class="col-md-6 mb-2">
+    <RadzenDropDown TValue="string"
+    Data="@lstUserSearch"
+    TextProperty="FullName"
+    ValueProperty="UserName"
+    @bind-Value="searchNguoiChuTri"
+    Placeholder="Nhập tên người chủ trì..."
+    AllowClear="true"
+    AllowFiltering="true"
+    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+    Style="width: 100%;" />
+
+    </div>
+    </div>
+    <div class="row mb-0">
+    <div class="col-12 d-flex align-items-center gap-3">
+    <RadzenLabel Text="Kiểu tìm kiếm:" />
+    <RadzenRadioButtonList @bind-Value="searchMode"
+    TValue="string"
+    Style="display: flex; gap: 10px;"
+    Data="@searchModes" />
+    </div>
+    </div>
+
+
+    </div>
+    <!-- Hàng nút lệnh tách biệt, nền đậm -->
+    <div class="action-bar d-flex justify-content-center align-items-center gap-3">
+    <RadzenButton Icon="search"
+    Click="@SearchVoid"
+    Text="TÌM KIẾM"
+    Style="min-width: 130px; font-size: 16px;"
+    ButtonStyle="ButtonStyle.Success" />
+    <RadzenButton Icon="cached"
+    Click="@ResetVoid"
+    Text="TẢI LẠI DỮ LIỆU"
+    Style="min-width: 130px; font-size: 16px;"
+    ButtonStyle="ButtonStyle.Info" />
+    </div>
+
+    </AddMore> *@
+    <MoreColumns>
+
+        @* <RadzenDataGridColumn TItem="tbVanBanDen" Title="Số ký hiệu văn bản" TextAlign="TextAlign.Left" Sortable="false"
+        Width="120px" Property="SoKiHieuVanBan" Frozen="true">
+
+        </RadzenDataGridColumn> *@
+        <RadzenDataGridColumn TItem="tbVanBanDen" Title="Số hiệu & Loại văn bản" TextAlign="TextAlign.Left" Sortable="false" Width="250px">
+            <Template Context="ctx">
+                @{
+                    // Tìm tên loại văn bản theo IdLoaiVanBan
+                    var tenLoai = lstLoaiVanBan.FirstOrDefault(x => x.IdLoaiVanBan == ctx.IdLoaiVanBan)?.TenDayDu ?? "";
+                }
+                @(ctx.SoKiHieuVanBan + (string.IsNullOrWhiteSpace(tenLoai) ? "" : " - " + tenLoai))
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="tbVanBanDen" Title="Trích yếu nội dung" TextAlign="TextAlign.Left" Sortable="false"
+                              Width="300px" Property="TrichYeuNoiDung">
+        </RadzenDataGridColumn>
+    </MoreColumns>
+    <FormDialog Context="ctx">
+        <VanBanDen_Detail Record="ctx" />
+    </FormDialog>
+</TableAPI>
+@code {
+    TableAPI<tbVanBanDen> grd;
+    string query = default!;
+    List<tbUser> lstUser = new List<tbUser>();
+    tbUser user = new tbUser();
+    string lamda_table = default!;
+    bool isLoading = false;
+    //BIẾN SEARCH
+    string currentLamda = null;
+    string searchTenCongViec = "";
+    string searchNguoiChuTri = "";
+    string searchMode = "Hoặc"; // Mặc định là OR
+    IEnumerable<string> searchModes = new[] { "Hoặc", "Và" };
+    List<tbLoaiVanBan> lstLoaiVanBan = new List<tbLoaiVanBan>();
+
+    ///LIST USER ĐỂ ĐƯA VÀO DROP DOWN TÌM KIẾM TRONG CÔNG VIỆC
+    List<tbUser> lstUserSearch = new List<tbUser>();
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        lstUserSearch = await apiService.GetAll<tbUser>();
+        lstLoaiVanBan = await apiService.GetAll<tbLoaiVanBan>();
+        lstUser = await apiService.GetAll<tbUser>();
+        //Lấy người dùng hiện tại
+        string? username = await authenService.GetUserName();
+        if (username != "systemadmin")
+        {
+            lamda_table = $"NguoiNhap==\"{username}\"";
+        }
+        else
+        {
+            lamda_table = null;
+        }
+
+        grd.Refresh();
+        StateHasChanged();
+        isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+    protected async Task Delete(tbVanBanDen record)
+    {
+        string lamda = $"IdVanBanDen=={record.IdVanBanDen}";
+        await apiService.Delete<tbVanBanDen>(lamda);
+        await grd.Refresh();
+    }
+
+}

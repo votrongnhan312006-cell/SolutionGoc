@@ -1,0 +1,20 @@
+@page "/editor/{fileId}"
+@inject NavigationManager Navigation
+
+<iframe src="@CollaboraUrl" width="100%" height="800px" style="border: none;"></iframe>
+
+@code {
+[Parameter] public string FileId { get; set; }
+
+private string CollaboraUrl;
+
+protected override void OnInitialized()
+{
+var wopiSrc = "http://host.docker.internal:5105/wopi/files/" + FileId;
+var accessToken = "your-secure-token";
+CollaboraUrl = $"http://localhost:9980/browser/321ff0a561/cool.html?WOPISrc={Uri.EscapeDataString(wopiSrc)}&access_token={accessToken}";
+Console.WriteLine(CollaboraUrl);
+}
+
+
+}

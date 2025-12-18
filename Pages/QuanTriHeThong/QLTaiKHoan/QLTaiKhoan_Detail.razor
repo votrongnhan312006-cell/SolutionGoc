@@ -1,0 +1,136 @@
+@using IDC.Frontend.Services
+@using QLCongViec.Models
+@inject Radzen.DialogService dialog
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@inject ClientServices client
+@using Microsoft.EntityFrameworkCore
+@using QLCongViec.Components
+@using QLCongViec.Models.HeThong
+@using QLCongViec.Services
+<style>
+.rz-textbox {
+width: 100%;
+}
+</style>
+<style>
+.rz-dialog-titlebar {
+margin-left: 20px;
+margin-bottom: -20px;
+}
+</style>
+
+@if (!Loading)
+{
+<Form TItem="tbSystemUser" Record=@user OnSubmit=@(args => Submit((tbSystemUser)args))>
+<MoreForms>
+<div class="row">
+<FormField Text="Tên đăng nhập" Size="3">
+<RadzenTextBox Name="UserName" @bind-Value=@user.UserName Style="Width: 100%" />
+<RadzenRequiredValidator Component="UserName" Text="Bắt buộc" />
+</FormField>
+ 
+<FormField Text="Họ và tên" Size="9">
+<RadzenTextBox @bind-Value=@user.FullName />
+</FormField>
+@* <FormField Text="Thuộc nhóm người dùng" Size="12">
+<RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+Data=@lstGroup ValueProperty="IdNhom" TextProperty="TenNhom" @bind-Value=@user.IdNhom Style="Width: 100%" />
+</FormField> *@
+   @*  <div class="rz-p-12 rz-text-align-left">
+<RadzenCheckBox @bind-Value=@createLDAPUser Name="CheckBox1" />
+<RadzenLabel Text="Tạo cả tài khoản LDAP" Component="CheckBox1" class="rz-ms-2" />
+</div> *@
+</div>
+</MoreForms>
+</Form>
+}
+
+@code {
+[Parameter] public tbSystemUser Record { get; set; }
+bool Loading = false;
+tbSystemUser user = new tbSystemUser();
+List<tbNhom> lstGroup = new List<tbNhom>();
+bool createLDAPUser = false;
+string DonVi = "";
+
+protected override async Task OnInitializedAsync()
+{
+if (Record == null || Record.IdUser == 0)
+{
+user = new tbSystemUser();
+}
+else
+{
+user = Record;
+}
+lstGroup = (await client.apiSevices.GetAll<tbNhom>()).Select(p => new tbNhom { IdNhom = p.IdNhom, TenNhom = p.TenNhom + " (" + p.MoTa + ")" }).ToList();
+}
+private void OnChange(object args)
+{
+// DonVi = lstCanBo.FirstOrDefault(p => p.IdCanBo == user.IdCanBo)?.DonVi;
+}
+
+//// <summary>
+/// Phương thức tạo mới một người dùng hệ thống
+/// </summary>
+/// <param name="objUser">Người dùng được tạo</param>
+/// <returns></returns>
+protected async Task Submit(tbSystemUser objUser)
+{
+try
+{
+// objUser.Password = "Abc123";
+// objUser.UserName = "nghiahvan2";
+// objUser.FullName = "Nguyễn Đình Nghĩa";
+// string email = "nghiahvan2@c500.edu.vn";
+
+// string sam = "nghiahvan2";
+// string db = "DB01";
+// string smtp = "nghiahvan2@c500.edu.vn";
+// string result = "";
+
+if (Record.IdUser == 0)
+{
+// Tạo tài khoản trên LDAP
+//ldapUserService.CreateUser(objUser.UserName, objUser.Password, objUser.FullName, email);
+
+
+// Liên kết tài khoản vừa tạo với tài khoản mail exchange
+// var (ok, output) = Prov.EnableMailboxOnPrem(sam, db, smtp);
+// result = ok ? output : $"Lỗi: {output}";
+
+
+
+// Lấy số định danh cho người dùng mới
+objUser.IdUser = await client.numServices.GetInt<tbUser>();
+
+
+//objUser.PasswordHash = Libs.CreateSHAHash(objUser.PasswordHash);
+//objUser.token = await Task.Run(() => TokenHelper.GenerateToken(objUser));
+
+await client.apiSevices.Create<tbSystemUser>(objUser);
+
+
+// Tạo tài khoản người dùng trên CSDL KeyLoak
+
+}
+else{
+// Cập nhật thông tin tài khoản trên LDAP
+
+
+// Cập nhật thông tin tài khoản trong CSDL dbQLCongViec
+await client.apiSevices.Update<tbSystemUser>(objUser);
+
+// Cập nhật thông tài khoản người dùng trên CSDL KeyLoak
+}
+}
+catch
+{
+//notificationService.Notify(NotificationSeverity.Error, $"Thông báo:", "Thay đổi không thành công", duration: 1500);
+}
+}
+
+
+}

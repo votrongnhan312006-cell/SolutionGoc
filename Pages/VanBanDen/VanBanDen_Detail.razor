@@ -1,0 +1,489 @@
+@using System.Globalization
+@using QLCongViec.Components.FileManager
+@using Minio
+@using Minio.DataModel
+@using Minio.DataModel.Args
+@using QLCongViec.Models
+@implements IAsyncDisposable
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject NotificationService notificationService
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject AuthenServices authService
+@inject LinkService linkService
+@inject FileService fileService
+@inject MinioService minioService
+
+<style>
+    .rz-textbox {
+        width: 100%;
+    }
+
+    .rz-dialog-titlebar {
+        margin-left: 20px;
+    }
+</style>
+<style>
+    fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 0px 25px 30px 25px;
+        */ margin-bottom: 10px;
+        margin-top: 0px;
+    }
+
+    .filebox-fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 10px 13px 10px 13px;
+        margin-bottom: 40px; /* Lề dưới dày hơn */
+        margin-top: 0px;
+    }
+
+</style>
+<Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+<Form TItem="tbVanBanDen" Record="@vanBanDen" OnSubmit="Submit">
+    <MoreForms>
+        <fieldset>
+
+
+            <div class="row">
+
+                <FormField Text="Sổ văn bản" Size="3">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstSoVanBan"
+                                    ValueProperty="IdSoVanBan"
+                                    TextProperty="TenSoVanBan"
+                                    @bind-Value="vanBanDen.IdSoVanBan"
+                                    Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Số ký, hiệu văn bản" Size="3">
+                    <RadzenTextBox @bind-Value="vanBanDen.SoKiHieuVanBan" Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Đơn vị gửi" Size="6">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstCoQuanBanHanh"
+                                    ValueProperty="IdDonVi"
+                                    TextProperty="DonVi"
+                                    @bind-Value="vanBanDen.IdCoQuanBanHanh"
+                                    Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Nơi nhận" Size="6">
+                    <RadzenTextBox @bind-Value="vanBanDen.NoiNhan" Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Số đến" Size="3">
+                    <RadzenTextBox @bind-Value="vanBanDen.SoDen" Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Ngày ban hành" Size="3">
+                    <RadzenDatePicker @bind-Value="vanBanDen.NgayBanHanh" DateFormat="dd/MM/yyyy" Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Ngày tiếp nhận" Size="3">
+                    <RadzenDatePicker @bind-Value="vanBanDen.NgayDen" DateFormat="dd/MM/yyyy" Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Thời hạn xử lý" Size="3">
+                    <RadzenDatePicker @bind-Value="vanBanDen.ThoiHanGiaiQuyet" DateFormat="dd/MM/yyyy" Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Phương thức nhận" Size="3">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstPhuongThucNhan"
+                                    ValueProperty="Id"
+                                    TextProperty="Ten"
+                                    AllowFiltering="true"
+                                    @bind-Value="vanBanDen.IdPhuongThucNhan"
+                                    Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Độ mật" Size="3">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstDoMat"
+                                    ValueProperty="Id"
+                                    TextProperty="Ten"
+                                    @bind-Value="vanBanDen.DoMat"
+                                    Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Độ khẩn" Size="3">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstDoKhan"
+                                    ValueProperty="Id"
+                                    TextProperty="Ten"
+                                    @bind-Value="vanBanDen.DoKhan"
+                                    Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Loại văn bản" Size="3">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstLoaiVanBan"
+                                    ValueProperty="IdLoaiVanBan"
+                                    TextProperty="TenDayDu"
+                                    AllowFiltering="true"
+                                    @bind-Value="vanBanDen.IdLoaiVanBan"
+                                    Style="width: 100%;" />
+                </FormField>
+
+
+                <FormField Text="Số trang" Size="3">
+                    <RadzenNumeric TValue="int?" @bind-Value="vanBanDen.SoTrang" Min="1" Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Họ tên người ký" Size="3">
+                    <RadzenTextBox @bind-Value="vanBanDen.HoTenNguoiKy" Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Trích yếu nội dung" Size="12">
+                    <RadzenTextArea @bind-Value="vanBanDen.TrichYeuNoiDung" Rows="3" Style="width: 100%;" />
+                </FormField>
+            </div>
+
+        </fieldset>
+        <div class="col-12" style="margin:2%;"></div>
+        <!-- FileBox đính kèm văn bản đến -->
+        <fieldset class="filebox-fieldset">
+            <FileBox @ref="grd"
+                     filter="@lamda"
+                     OnDelete="Delete"
+                     OnPreview="Preview"
+                     OnDownload="Download"
+                     ShowClose="true"
+                     uploadFileList="@listUpload"
+                     uploadFileListChanged="@(arg => ChangeUpload((List<FileUpload>)arg))">
+            </FileBox>
+        </fieldset>
+    </MoreForms>
+</Form>
+
+@code {
+    // SỦA Ở ĐÂY
+    [Parameter] public tbVanBanDen Record { get; set; }
+    bool isLoading = false;
+    tbVanBanDen vanBanDen = new tbVanBanDen();
+
+    // List dropdown data - cần lấy từ API hoặc mock data ở đây
+    List<SoVanBan> lstSoVanBan = new List<SoVanBan>();
+    List<tbLoaiVanBan> lstLoaiVanBan = new List<tbLoaiVanBan>();
+    List<tbDonVi> lstCoQuanBanHanh = new List<tbDonVi>();
+    List<DropDownOption> lstDoMat = new List<DropDownOption>
+{
+new DropDownOption{Id=1, Ten="Mật"},
+new DropDownOption{Id=2, Ten="Tối Mật"},
+new DropDownOption{Id=3, Ten="Tuyệt mật"}
+};
+    List<DropDownOption> lstDoKhan = new List<DropDownOption>
+{
+new DropDownOption{Id=1, Ten="Khẩn"},
+new DropDownOption{Id=2, Ten="Thượng khẩn"},
+new DropDownOption{Id=3, Ten="Hoả tốc"}
+};
+
+    List<DropDownOption> lstPhuongThucNhan = new List<DropDownOption>
+{
+new DropDownOption{Id=1, Ten="Qua hệ thống ĐHVB"},
+new DropDownOption{Id=2, Ten="Qua email"},
+new DropDownOption{Id=3, Ten="Trực tiếp"}
+};
+    /////////////////////////////////////////////
+    //   FileBox Variable
+    /////////////////////////////////////////////
+    FileBox grd;
+    string query = default!;
+    string lamda;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    /////////////////////////////////////////////
+    //   Minio and UploadFile Variable
+    /////////////////////////////////////////////
+    private List<tbFile> filesInMinio = new List<tbFile>();
+    private string bucketName = "2025";
+
+    <!-- #$Upload file -->
+    List<FileUpload> listUpload = new List<FileUpload>();
+    List<FileUpload> notAddedToCVYet = new List<FileUpload>();
+    private bool _isSubmitted = false;
+    private List<tbFile> pendingRestoreFiles = new List<tbFile>();
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await Task.Delay(100);
+        vanBanDen = (Record == null || Record.IdVanBanDen == 0) ? vanBanDen : Record;
+
+        // Load data cho dropdown nếu cần
+        //lstSoVanBan = await apiService.GetAll<SoVanBan>();
+        lstLoaiVanBan = await apiService.GetAll<tbLoaiVanBan>();
+        // lstCoQuanBanHanh = await apiService.GetAll<tbDonVi>("CanBoApiBaseUrl", "api/donvi/getallnopaged");
+        lstCoQuanBanHanh = await apiService.GetAll<tbDonVi>();
+
+        // Nếu có file đính kèm
+        lamda = "";
+        if (Record != null && Record.IdFileDinhKem != null)
+        {
+            //Điều kiện để chọn các file tài liệu liên quan đến công việc
+            var lstUid = Record.IdFileDinhKem.Split("|").ToList();
+            foreach (string uid in lstUid)
+            {
+                if ((String.IsNullOrEmpty(lamda)) && (uid != ""))
+                    lamda = "uid.Contains(\"" + uid + "\")";
+                else
+                {
+                    if (uid != "" && !String.IsNullOrEmpty(lamda))
+                        lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
+                }
+            }
+        }
+        isLoading = false;
+    }
+
+    protected async Task Submit(tbVanBanDen vanBanDen)
+    {
+        if (notAddedToCVYet.Any())
+        {
+            var newIds = string.Join("|", notAddedToCVYet.Select(it => it.uid));
+            if (!string.IsNullOrEmpty(vanBanDen.IdFileDinhKem))
+            {
+                vanBanDen.IdFileDinhKem += "|" + newIds;
+            }
+            else
+            {
+                vanBanDen.IdFileDinhKem = newIds;
+            }
+        }
+
+        // Save logic - Tùy bạn là thêm mới hay cập nhật
+        if (Record == null || Record.IdVanBanDen == 0)
+        {
+            var username = await authService.GetUserName();
+            vanBanDen.NguoiNhap = username;
+            vanBanDen.IdVanBanDen = await client.numServices.GetInt<tbVanBanDen>("seq_tbVanBanDen");
+            await apiService.Create<tbVanBanDen>(vanBanDen);
+        }
+        else
+            await apiService.Update<tbVanBanDen>(vanBanDen);
+
+        _isSubmitted = true;
+        notAddedToCVYet.Clear();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // nếu delete file đã tồn tại thì ở đây đã ko còn nó nữa
+        var check = await apiService.GetAll<tbFile>();
+
+        // Xóa mà không submit, ảnh hưởng đến các file đã từng đc lưu
+        if (!_isSubmitted && pendingRestoreFiles.Any())
+        {
+            foreach (var file in pendingRestoreFiles)
+            {
+                try
+                {
+                    if (check.Any(x => x.uid == file.uid))
+                        continue; // tTránh chèn trùng nếu có sự cố
+
+                    await apiService.Create<tbFile>(file);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Khôi phục file {file.uid} lỗi: {ex.Message}");
+                }
+            }
+            pendingRestoreFiles.Clear();
+        }
+
+        // xóa file rác nếu chưa submit
+        if (notAddedToCVYet.Any()) // nếu chưa submit hoặc không thêm mới file gì thì List này sẽ rỗng
+        {
+            foreach (var file in notAddedToCVYet)
+            {
+                int count = check.Count(item => item.hash == file.hash);
+                if (count == 1)
+                {
+                    var fileFolder = FormFileHelper.GetFileType(file.fileName ?? "");
+                    RemoveObjectArgs args = new RemoveObjectArgs().WithBucket(file.bucketName).WithObject(fileFolder + $"/{file.hash}{Path.GetExtension(file.fileName)}");
+                    await minioService.GetClient().RemoveObjectAsync(args);
+                }
+                string deletedLambda = $"uid==\"{file.uid}\"";
+                await apiService.Delete<tbFile>(deletedLambda);
+            }
+        }
+    }
+
+    /////////////////////////////////////////////
+    //   FileBox Function
+    /////////////////////////////////////////////
+    protected async Task Delete(tbFile record)
+    {
+        if (!_isSubmitted || !notAddedToCVYet.Select(i => i.uid).ToList().Contains(record.uid))
+        {
+            pendingRestoreFiles.Add(record); // Lưu lại file để phục hồi nếu người dùng không submit
+        }
+
+        string apiPath = "api/file";
+        string deletedLambda = $"p=>p.uid==\"{record.uid}\"";
+        await apiService.Delete<tbFile>(deletedLambda);
+        notAddedToCVYet.RemoveAll(p => p.uid == record.uid);
+        await grd.Refresh();
+    }
+    protected async Task Preview(tbFile record)
+    {
+        try
+        {
+            var fileExtension = Path.GetExtension(record.filename).ToLower();
+            var mediaExtensions = new HashSet<string> { ".mp3", ".mp4" };
+
+            // objectName trên Minio
+            var objectName = $"{record.hash}{fileExtension}";
+
+            // URL một lần dùng (presigned)
+            string tokenUrl = linkService.GenerateOneTimeLink(objectName, record.bucket);
+
+            if (mediaExtensions.Contains(fileExtension))
+            {
+                await DialogService.OpenAsync("Xem trước", ds => (RenderFragment)(builder =>
+                {
+                    builder.OpenElement(0, "div");
+                    builder.AddAttribute(1,
+                        "style",
+                        "display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;");
+
+                    builder.OpenElement(2, fileExtension == ".mp4" ? "video" : "audio");
+                    builder.AddMultipleAttributes(3, new Dictionary<string, object>
+                        {
+                    { "src", tokenUrl },   // DÙNG URL ĐÃ KÝ Ở ĐÂY
+                    { "controls", true },
+                    { "autoplay", true },
+                    { "preload", "auto" },
+                    { "style", "max-width: 90%; max-height: 90vh; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);" }
+                        });
+                    builder.CloseElement(); // video/audio
+
+                    builder.CloseElement(); // div
+                }),
+                new DialogOptions
+                    {
+                        Width = "60vw",
+                        Height = "auto",
+                        Resizable = false,
+                        Draggable = false
+                    });
+            }
+            else
+            {
+                // Không cần eval, gọi open trực tiếp
+                await JSRuntime.InvokeVoidAsync("open", tokenUrl, "_blank");
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    protected async Task Download(tbFile record)
+    {
+        try
+        {
+            await JSRuntime.InvokeAsync<object>("open",
+            $"/get-presigned-url?bucketName={record.bucket}&objectName={record.hash}{Path.GetExtension(record.filename)}",
+            "_blank");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    <!-- #Function for TẢI LÊN button -->
+    protected async Task ChangeUpload(List<FileUpload> uploads)
+    {
+        listUpload = uploads;
+        List<string> listUploaded = listUpload.Select(item => item.uid).ToList();
+        if (uploads == null || !uploads.Any())
+        {
+            return;
+        }
+        foreach (string uid in listUploaded)
+        {
+            if (String.IsNullOrEmpty(lamda) && (uid != ""))
+                lamda = "uid.Contains(\"" + uid + "\")";
+            else
+            {
+                if (uid != "")
+                    lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
+            }
+        }
+        //Đường dẫn đến API
+        List<tbFile> existingFiles = (await apiService.GetAll<tbFile>()).Where(f => listUploaded.Contains(f.uid))
+        .ToList();
+        foreach (var upload in uploads)
+        {
+            var existingFile = existingFiles.FirstOrDefault(f => f.uid == upload.uid);
+
+            if (existingFile != null)
+            {
+                existingFile.filename = upload.fileName;
+                existingFile.bucket = upload.bucketName;
+                existingFile.hash = upload.hash;
+                existingFile.pageCount = upload.pageCount ?? 0;
+                existingFile.loaiFile = upload.loaiFile ?? "";
+                existingFile.fileContent = upload.fileContent ?? "";
+
+                await apiService.Update<tbFile>(existingFile);
+            }
+            else
+            {
+                string uniqueUid = upload.uid;
+                List<string> existingUid = (await apiService.GetAll<tbFile>())
+                .Select(u => u.uid)
+                .ToList();
+
+
+                // Kiểm tra xem uid đã tồn tại hay chưa (phòng khi upload.uid bị trùng)
+                if (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid))
+                {
+                    // Tạo uid mới nếu bị trùng
+                    do
+                    {
+                        uniqueUid = Guid.NewGuid().ToString();
+                    }
+                    while (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid));
+                }
+
+                var newFile = new tbFile
+                    {
+                        uid = uniqueUid,
+                        filename = upload.fileName,
+                        bucket = upload.bucketName,
+                        hash = upload.hash,
+                        pageCount = upload.pageCount ?? 0,
+                        loaiFile = upload.loaiFile ?? "",
+                        fileContent = upload.fileContent ?? ""
+                    };
+                await apiService.Create<tbFile>(newFile);
+                notAddedToCVYet.Add(upload); //Add để xác định xem file nào mới
+            }
+
+        }
+        await grd.ForceRefresh();
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Model phụ cho các dropdown option
+    public class DropDownOption
+    {
+        public int Id { get; set; }
+        public string Ten { get; set; }
+    }
+    public class SoVanBan
+    {
+        public int IdSoVanBan { get; set; }
+        public string TenSoVanBan { get; set; }
+    }
+    //   public class LoaiVanBan { public int IdLoaiVanBan { get; set; } public string TenLoaiVanBan { get; set; } }
+    public class CoQuanBanHanh
+    {
+        public int IdCoQuanBanHanh { get; set; }
+        public string TenCoQuan { get; set; }
+    }
+}

@@ -1,0 +1,164 @@
+@using IDC.Frontend.Services.ApiService
+@using QLCongViec.Models
+@inject Radzen.DialogService dialog
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@inject ApiServices apiService
+@using Microsoft.EntityFrameworkCore;
+@using QLCongViec.Components
+@using QLCongViec.Services
+@inject ClientServices Client
+
+<div class="col-12">
+<RadzenLabel Text="Danh sách chức năng"
+Style="font-family: 'Source Sans Pro', sans-serif; font-weight: 500; color: #000; font-size: 18px; margin-bottom: 10px; margin-top: 10px; width: 100%">
+</RadzenLabel>
+<RadzenCard>
+<RadzenTree Style="height: 400px; width: 100%">
+@renderFeature(null, 1, "")
+</RadzenTree>
+</RadzenCard>
+<div style="margin-top: 10px; float: right">
+<RadzenButton Style="margin-right: 10px" Click="Submit">Cập nhật</RadzenButton>
+<RadzenButton ButtonStyle="ButtonStyle.Light" Click="Cancel">Thoát</RadzenButton>
+</div>
+</div>
+
+
+@code {
+[Parameter] public tbUser Record { get; set; }
+List<tbChucNang> lstChucNang = new List<tbChucNang>();
+List<tbChucNang_NguoiDung> lstchucnang_nguoidung = new List<tbChucNang_NguoiDung>();
+List<int?> featureId = new List<int?>();
+List<bool> lstChucNangNSD = new List<bool>();
+List<bool> lstChucNangCuaNhom = new List<bool>();
+tbNhom Selected = new tbNhom();
+
+protected override async Task OnInitializedAsync()
+{
+//Lấy toàn bộ chức năng của phần mềm
+lstChucNang = await apiService.GetAll<tbChucNang>();
+lstChucNang = lstChucNang.OrderBy(item => item.STT).ToList();
+
+//Lấy danh sách các chức năng của nhóm được chọn
+// string lamda = "p=>p.IdNhom==" + Record.IdNhom;
+// if(Record.IdNhom!=null)
+// {
+// featureId = (await apiService.GetAll<tbChucNang_Nhom>("NghiPhepBaseApiUrl","api/chucnang_nhom/getallnopaged", lamda)).Select(p => p.IdChucNang).ToList();
+// }
+
+
+//Đánh dấu các trức năng của nhóm được chọn
+lstChucNang.ForEach(item =>
+{
+bool flag = false;
+if (featureId!=null)
+{
+flag = featureId.Contains(item.IdChucNang) ? true : false;
+}
+
+lstChucNangNSD.Add(flag);
+lstChucNangCuaNhom.Add(flag ? true : false);
+});
+
+
+//Lấy danh sách các chức năng của nhóm được chọn
+string lamda1 = $"IdNguoiDung =={Record.IdUser}";
+lstchucnang_nguoidung = await apiService.GetAll<tbChucNang_NguoiDung>(lamda1);
+
+if (lstchucnang_nguoidung!=null)
+featureId = lstchucnang_nguoidung.Select(p => p.IdChucNang).ToList();
+//Đánh dấu các trức năng của nhóm được chọn
+lstChucNang.ForEach(item =>
+{
+bool flag = false;
+if (featureId != null)
+{
+flag = featureId.Contains(item.IdChucNang) ? true : false;
+}
+int index = lstChucNang.IndexOf(item);
+if(flag)
+{
+lstChucNangNSD[index] = true;
+}
+});
+
+
+base.OnInitialized();
+}
+RenderFragment renderFeature(int? Parent, int level, string STT)
+{
+List<tbChucNang> list = lstChucNang.Where(item => item.ChucNangCha == Parent).OrderBy(item => item.STT).ToList();
+
+return
+@<div>
+@for (int i = 0; i < list.Count; i++)
+{
+tbChucNang item = list[i];
+int Index = lstChucNang.IndexOf(item);
+List<string> arr = STT.Split(".").ToList();
+if (arr.Count == 1)
+{
+arr[arr.Count - 1] = (i + 1).ToString();
+}
+else
+{
+arr.Add((i + 1).ToString());
+}
+List<tbChucNang> temp = lstChucNang.Where(para => para.ChucNangCha == item.IdChucNang).ToList();
+bool checkRender = temp.Count > 0 ? true : false;
+@if (checkRender)
+{
+<RadzenTreeItem>
+<Template>
+<RadzenCheckBox Disabled=@lstChucNangCuaNhom[Index] @bind-Value=@lstChucNangNSD[Index] Style="margin-right: 10px" /> @(String.Join(".", arr) + ". "
++ item.TenChucNang)
+</Template>
+<ChildContent>
+@renderFeature(item.IdChucNang, level + 1, String.Join(".", arr))
+</ChildContent>
+</RadzenTreeItem>
+}
+else
+{
+<RadzenTreeItem>
+<Template>
+<RadzenCheckBox Disabled=@lstChucNangCuaNhom[Index] @bind-Value=@lstChucNangNSD[Index] Style="margin-right: 10px" /> @(String.Join(".", arr) + ". "
++ item.TenChucNang)
+</Template>
+</RadzenTreeItem>
+}
+}
+</div>
+;
+}
+
+void Cancel()
+{
+dialog.Close(null);
+}
+
+async void Submit()
+{
+//Bổ sung các chức năng mới của nhóm
+tbChucNang_NguoiDung chucnang;
+List<tbChucNang_NguoiDung> addChucNangs = new List<tbChucNang_NguoiDung>();
+for (int i = 0; i < lstChucNang.Count; i++)
+{
+if (!lstChucNangCuaNhom[i] && lstChucNangNSD[i])
+{
+chucnang = new tbChucNang_NguoiDung();
+chucnang.IdChucNang_NguoiDung = await Client.numServices.GetInt<tbChucNang_NguoiDung>("seq_tbChucNang_NguoiDung");
+chucnang.IdChucNang = lstChucNang[i].IdChucNang;
+chucnang.IdNguoiDung = Record.IdUser;
+addChucNangs.Add(chucnang);
+}
+}
+if (lstchucnang_nguoidung.Count>0)
+await apiService.Delete<tbChucNang_NguoiDung>(lstchucnang_nguoidung);
+
+await apiService.Create<tbChucNang_NguoiDung>(addChucNangs);
+dialog.Close();
+}
+}

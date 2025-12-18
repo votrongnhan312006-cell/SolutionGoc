@@ -1,0 +1,74 @@
+@using System.Globalization
+@using QLCongViec.Components.FileManager
+@using Minio
+@using Minio.DataModel
+@using Minio.DataModel.Args
+@using QLCongViec.Models
+@using System.Reactive.Linq
+@using QLCongViec.Pages.FileEditor
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject NotificationService notificationService
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject AuthenServices authService
+@inject LinkService linkService
+@inject FileService fileService
+@inject MinioService minioService
+
+<style>
+    .rz-textbox {
+        width: 100%;
+    }
+
+    .rz-dialog-titlebar {
+        margin-left: 20px;
+        margin-bottom: -20px;
+    }
+</style>
+
+@if (!Loading)
+{
+    <Form TItem="tbDonVi" Record=@donvi OnSubmit="Submit">
+        <MoreForms>
+            <div class="row">
+                <FormField Text="Đơn vị" Size="12">
+                    <RadzenTextBox @bind-Value=@donvi.DonVi />
+                </FormField>
+            </div>
+
+        </MoreForms>
+    </Form>
+}
+
+@code {
+
+    [Parameter] public tbDonVi Record { get; set; }
+    bool Loading = false;
+    tbDonVi donvi = new tbDonVi();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        donvi = (Record == null || Record.IdDonVi == 0) ? donvi : Record;
+    }
+
+
+    protected async Task Submit(tbDonVi donvi)
+    {
+        if (Record.IdDonVi == 0)
+        {
+            //Thêm mới một bản ghi
+            donvi.IdDonVi = await client.numServices.GetInt<tbDonVi>();
+
+            //2. Thêm dữ liệu vào bảng
+            await apiService.Create<tbDonVi>(donvi);
+        }
+        else
+        {
+            //2. Thêm dữ liệu vào bảng
+            await apiService.Update<tbDonVi>(donvi);
+        }
+    }
+
+}

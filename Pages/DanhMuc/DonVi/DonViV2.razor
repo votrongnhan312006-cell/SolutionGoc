@@ -1,0 +1,90 @@
+@page "/don-vi-V2"
+@using QLCongViec.Components
+@using QLCongViec.Models
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+
+<style>
+    .rz-label {
+        margin-bottom: 0;
+        font-weight: bold;
+    }
+
+    .rz-column-title-content {
+        font-weight: bold;
+    }
+</style>
+<LoadingIndicator IsDeleting ="@isDeleting" IsSaving="@isSaving" />
+
+
+<TableAPI @ref=grd TItem="tbDonVi"
+          TableTitle="VĂN BẢN ĐẾN"
+          FormTitle="THÔNG TIN CÔNG VIỆC"
+          OnDelete="@(args => Delete((tbDonVi)args))"
+          DeleteFunction="true"
+          AddNew=true isSearch=true ShowClose=true
+          OperationsSTTWidth="50px" OperationColumnWidth="60px">
+    
+    <MoreColumns>
+
+        <RadzenDataGridColumn TItem="tbDonVi" Title="Đơn vị" TextAlign="TextAlign.Left" Sortable="false"
+                              Width="300px" Property="DonVi">
+        </RadzenDataGridColumn>
+    </MoreColumns>
+    <FormDialog Context="ctx">
+        <DonVi_Detail Record="ctx" />
+    </FormDialog>
+</TableAPI>
+
+
+@code {
+    TableAPI<tbDonVi> grd;
+    string query = default!;
+    List<tbUser> lstUser = new List<tbUser>();
+
+    bool isSaving = false;
+    bool isDeleting = false;
+    bool isSearching = true;
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected async Task Create(tbDonVi record)
+    {
+        // Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+        //1. Chuẩn bị dữ liệu
+        record.IdDonVi = await client.numServices.GetInt<tbDonVi>();
+        //2. Thêm dữ liệu vào bảng
+        await apiService.Create<tbDonVi>(record);
+    }
+
+    protected async Task Update(tbDonVi record)
+    {
+        isSaving = true;
+        // Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+        //Nếu là thêm mới
+        if (record.IdDonVi == 0)
+        {
+            record.IdDonVi = await client.numServices.GetInt<tbDonVi>();
+            //2. Thêm dữ liệu vào bảng
+            await apiService.Create<tbDonVi>(record);
+        }
+        else
+        {
+            await apiService.Update<tbDonVi>(record);
+        }
+        isSaving = false;
+    }
+
+    protected async Task Delete(tbDonVi record)
+    {
+        isDeleting = true;
+        // Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+        //1. Chuẩn bị điều kiện
+        string lamdaTemp = $"IdDonVi=={record.IdDonVi}";
+        //2. Thêm dữ liệu vào bảng
+        await apiService.Delete<tbDonVi>(lamdaTemp);
+        isDeleting = false;
+    }
+}

@@ -1,0 +1,358 @@
+@page "/DanhSachCongViec"
+@using QLCongViec.Components
+@using QLCongViec.Models
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+@inject AuthenServices authenService
+@inject ContextMenuService CtxMenu
+@inject DialogService dialog
+
+<style>
+    .rz-label {
+        margin-bottom: 0;
+        font-weight: bold;
+    }
+
+    .rz-column-title-content {
+        font-weight: bold;
+    }
+
+    p {
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<style>
+    .search-container {
+        border: 1px solid #ddd;
+        padding: 10px 18px 1px 18px; /* padding dưới nhỏ lại */
+        border-radius: 0px;
+        background-color: #f9f9f9;
+        margin-bottom: 0px;
+    }
+
+        .search-container .row {
+            margin-bottom: 0px; /* các hàng sát nhau */
+        }
+
+            .search-container .row:last-child {
+                margin-bottom: 8px !important;
+            }
+
+        .search-container .col-12:last-child,
+        .search-container .d-flex:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+    .action-bar {
+        background: #e9ecef; /* Nền đậm, nổi bật */
+        padding: 8px 8px;
+        border-radius: 0px;
+        margin-bottom: 0px;
+        border: 1px solid #ddd;
+        border-top: none;
+    }
+
+        .action-bar .rz-button {
+            font-size: 15px;
+            /*  font-weight: bold; */
+            border-radius: 6px;
+        }
+</style>
+
+<div class="table-scope" @oncontextmenu:preventDefault="true">
+    <LoadingIndicator IsSearching="@isRadzenSearching" IsSaving="@isRadzenSaving" />
+    <Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+    <TableAPI @ref=grd TItem="tbCongViec" TableTitle="DANH SÁCH CÔNG VIỆC" FormTitle="THÔNG TIN CÔNG VIỆC" filter="@lamda_table"
+              OnDelete="@(args => Delete((tbCongViec)args))" DeleteFunction="true" AddNew="false" isSearch="true" ShowClose="true" OnRowContextMenu="HandleRowContextMenu">
+
+        <AddMore>
+            <div class="search-container">
+                <div class="row align-items-end mb-0">
+                    <div class="col-md-4 mb-2">
+                        <RadzenTextBox @bind-Value=@searchTenCongViec
+                                       @onkeyup=@(args => SearchInputKeyPressed(args))
+                                       Placeholder="Nhập tên công việc..."
+                                       Style="width: 100%;" />
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <RadzenDropDown TValue="string"
+                                        Data="@lstUserSearch"
+                                        TextProperty="FullName"
+                                        ValueProperty="UserName"
+                                        @bind-Value="searchNguoiChuTri"
+                                        Placeholder="Nhập tên người chủ trì..."
+                                        AllowClear="true"
+                                        AllowFiltering="true"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        Style="width: 100%;" />
+
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <RadzenDropDown TValue="string"
+                                        Data="@roleOptions"
+                                        @bind-Value="searchVaiTro"
+                                        Placeholder="Chọn vai trò..."
+                                        AllowClear="true"
+                                        Style="width: 100%;" />
+                    </div>
+                </div>
+                <div class="row mb-0">
+                    <div class="col-12 d-flex align-items-center gap-3">
+                        <RadzenLabel Text="Kiểu tìm kiếm:" />
+                        <RadzenRadioButtonList @bind-Value="searchMode"
+                                               TValue="string"
+                                               Style="display: flex; gap: 10px;"
+                                               Data="@searchModes" />
+                    </div>
+                </div>
+
+
+            </div>
+            <!-- Hàng nút lệnh tách biệt, nền đậm -->
+            <div class="action-bar d-flex justify-content-center align-items-center gap-3">
+                <RadzenButton Icon="search"
+                              Click="@SearchVoid"
+                              Text="TÌM KIẾM"
+                              Style="min-width: 130px; font-size: 16px;"
+                              ButtonStyle="ButtonStyle.Success" />
+                <RadzenButton Icon="cached"
+                              Click="@ResetVoid"
+                              Text="TẢI LẠI DỮ LIỆU"
+                              Style="min-width: 130px; font-size: 16px;"
+                              ButtonStyle="ButtonStyle.Info" />
+            </div>
+
+        </AddMore>
+        <MoreColumns>
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Tên công việc" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="400px" Property="TenCongViec" Frozen="true">
+                <Template Context="ctx">
+                    <WrapWord Data=@ctx.TenCongViec />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Người giao việc" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="120px" Property="NguoiGiao" Frozen="true">
+                <Template Context="ctx">
+                    @lstUser.Where(p => p.UserName == ctx.NguoiGiao).FirstOrDefault()?.FullName
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Người chủ trì" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="140px" Property="NguoiChuTri" Frozen="true">
+                <Template Context="ctx">
+                    @lstUser.Where(p => p.UserName == ctx.NguoiChuTri).FirstOrDefault()?.FullName
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Ngày hoàn thành" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="120px" Property="NgayHT">
+            </RadzenDataGridColumn>
+
+        </MoreColumns>
+        <FormDialog Context="ctx">
+            <CongViec_Detail Record="ctx" />
+        </FormDialog>
+    </TableAPI>
+</div>
+
+@code {
+    TableAPI<tbCongViec> grd;
+    string query = default!;
+    List<tbUser> lstUser = new List<tbUser>();
+    tbUser user = new tbUser();
+    string lamda_table = default!;
+    bool isLoading = false;
+    //BIẾN SEARCH
+    string currentLamda = null;
+    string searchTenCongViec = "";
+    string searchNguoiChuTri = "";
+    string searchVaiTro = null;
+
+    string searchMode = "Hoặc"; // Mặc định là OR
+    IEnumerable<string> searchModes = new[] { "Hoặc", "Và" };
+    IEnumerable<string> roleOptions = new[] { "Công việc chủ trì", "Công việc phối hợp" };
+
+    ///LIST USER ĐỂ ĐƯA VÀO DROP DOWN TÌM KIẾM TRONG CÔNG VIỆC
+    List<tbUser> lstUserSearch = new List<tbUser>();
+    bool isRadzenSearching = false;
+    bool isRadzenSaving = false;
+    string loadingMessage = "";
+    string currentUser = "";
+
+    void HandleRowContextMenu((MouseEventArgs e, tbCongViec row) arg)
+    {
+        // dùng tuple deconstruction nếu thích
+        var (mouse, record) = arg;
+        ShowRowMenu(mouse, record);
+    }
+
+
+    // Gọi ở nơi bạn mở menu
+    void ShowRowMenu(MouseEventArgs mouse, tbCongViec row)
+    {
+        var items = new List<ContextMenuItem>
+{
+new() { Text = "Sửa",Value = "edit",Icon = "edit"},
+new() { Text = "Xóa",Value = "delete",Icon = "delete" },
+new() { Text = "Báo cáo công việc",Value = "baocao", Icon = "bar_chart"},
+new() { Text = "Đánh giá công việc",Value = "danhgia", Icon = "task_alt"}
+
+
+};
+
+        CtxMenu.Open(mouse, items,
+        async (MenuItemEventArgs e) => await OnRowMenuClickAsync(e, row));
+    }
+
+    async Task OnRowMenuClickAsync(MenuItemEventArgs e, tbCongViec row)
+    {
+        switch (e.Value?.ToString())
+        {
+
+
+            case "delete":
+                var confirmResult = await dialog.Confirm(
+                "Chắc chắn muốn xóa bản ghi ?",
+                "Xác nhận xoá",
+                new ConfirmOptions
+                    {
+                        OkButtonText = "Đồng ý",
+                        CancelButtonText = "Hủy",
+                        Width = "400px"
+                    }
+                );
+
+                if (confirmResult == true) // chỉ khi người dùng đồng ý
+                {
+                    await Delete(row);
+                }
+                break;
+
+        }
+
+        CtxMenu.Close();
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        //Lấy người dùng hiện tại
+        lstUserSearch = await apiService.GetAll<tbUser>();
+
+        string? username = await authenService.GetUserName();
+        currentUser = user.UserName;
+        if (username != "systemadmin")
+        {
+            lamda_table = $"NguoiTao==\"{username}\"";
+        }
+        else
+        {
+            lamda_table = null;
+        }
+        grd.Refresh();
+        StateHasChanged();
+        lstUser = await apiService.GetAll<tbUser>();
+        isLoading = false;
+    }
+    protected async Task Delete(tbCongViec record)
+    {
+        string lamda = $"IdCongViec=={record.IdCongViec}";
+        await apiService.Delete<tbUser>(lamda);
+
+        //Xoá lịch sử liên quan đến công việc này nếu có
+        var historytmp = await apiService.GetAll<tbCongViecHistory>(lamda);
+        if (historytmp != null && historytmp.Count > 0)
+        {
+            await apiService.Delete<tbCongViecHistory>(historytmp);
+        }
+        //Xoá văn bản góp ý liên quan đến công việc này nếu có
+        if (record.IdLoaiCongViec == 1)
+        {
+            await apiService.Delete<tbVanBanGopY>(lamda);
+        }
+        //Xoá dự thảo bài viết liên quan đến công việc này nếu có
+        if (record.IdLoaiCongViec == 3)
+        {
+            await apiService.Delete<tbGiayMoiVietBai>(lamda);
+        }
+
+        await grd.Refresh();
+    }
+
+
+    protected async Task SearchVoid()
+    {
+        isRadzenSearching = true;
+        loadingMessage = "Đang tìm kiếm...";
+        StateHasChanged();
+        try
+        {
+            List<string> conditions = new List<string>();
+            if (!string.IsNullOrEmpty(searchTenCongViec))
+                conditions.Add($"p.TenCongViec.Contains(\"{searchTenCongViec}\")");
+            if (!string.IsNullOrEmpty(searchNguoiChuTri))
+                conditions.Add($"p.NguoiChuTri.Contains(\"{searchNguoiChuTri}\")");
+
+            if (searchVaiTro == "Công việc chủ trì")
+            {
+                // Chỉ lấy công việc mà NguoiChuTri trùng với username đăng nhập
+                conditions.Add($"p.NguoiChuTri==\"{currentUser}\"");
+            }
+            if (searchVaiTro == "Tất cả công việc")
+            {
+
+            }
+            if (searchVaiTro == "Công việc phối hợp")
+            {
+                // Chỉ lấy công việc có người phối hợp
+                conditions.Add($"p.HasNguoiPhoiHop=\"true\"");
+            }
+            if (conditions.Any())
+            {
+                string joinOperator = searchMode == "Và" ? " β " : " || ";
+                string searchConditions = string.Join(joinOperator, conditions);
+                currentLamda = $"p =>({searchConditions})";
+                //currentLamda = $"p => {string.Join(joinOperator, conditions)}";
+            }
+
+            lamda_table = currentLamda;
+            await grd.Refresh();
+        }
+        finally
+        {
+            isRadzenSearching = false;
+            StateHasChanged();
+
+        }
+    }
+    protected async Task SearchInputKeyPressed(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" || args.Key == "NumpadEnter")
+        {
+            await SearchVoid();
+        }
+    }
+    protected async Task ResetVoid()
+    {
+        searchNguoiChuTri = "";
+        searchTenCongViec = "";
+        searchMode = "Hoặc"; // Reset về mặc định
+        currentLamda = null; // Reset lamda
+        lamda_table = null; // Reset lamda table
+                            // grd.lamda = currentLamda;
+        string? username = await authenService.GetUserName();
+        if (username != "systemadmin")
+        {
+            lamda_table = $"NguoiTao==\"{username}\"";
+        }
+        else
+        {
+            lamda_table = null;
+        }
+        grd.Refresh();
+    }
+}

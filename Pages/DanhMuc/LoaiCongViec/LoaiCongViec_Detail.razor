@@ -1,0 +1,339 @@
+@using System.Globalization
+@using QLCongViec.Components.FileManager
+@using Minio
+@using Minio.DataModel
+@using Minio.DataModel.Args
+@using QLCongViec.Models
+@using System.Reactive.Linq
+@using QLCongViec.Pages.FileEditor
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject NotificationService notificationService
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject AuthenServices authService
+@inject LinkService linkService
+@inject FileService fileService
+@inject MinioService minioService
+
+<style>
+.rz-textbox {
+width: 100%;
+}
+.rz-dialog-titlebar {
+margin-left: 20px;
+margin-bottom: -20px;
+}
+</style>
+
+@if (!Loading)
+{
+<Form TItem="tbCongViec" Record=@congviec OnSubmit="Submit">
+<MoreForms>
+<div class="row">
+<FormField Text="Căn cứ giao việc" Size="12">
+<RadzenTextBox @bind-Value=@congviec.CanCuGiaoViec />
+</FormField>
+<FormField Text="Tên công việc" Size="12">
+<RadzenTextBox @bind-Value=@congviec.TenCongViec />
+</FormField>
+<FormField Text="Ngày giao" Size="3">
+<RadzenDatePicker @bind-Value=@congviec.NgayGiao DateFormat="hh:mm dd/MM/yyyy" Style="Width: 100%" />
+</FormField>
+<FormField Text="Ngày hoàn thành" Size="3">
+<RadzenDatePicker @bind-Value=@congviec.NgayHT DateFormat="hh:mm dd/MM/yyyy" Style="Width: 100%" />
+</FormField>
+<FormField Text="Người giao" Size="3">
+<RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+ValueProperty="UserName" TextProperty="FullName" @bind-Value=@congviec.NguoiGiao Data="@lstUser" Style="Width: 100%" />
+</FormField>
+<FormField Text="Người chủ trì" Size="3">
+<RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+ValueProperty="UserName" TextProperty="FullName" @bind-Value=@congviec.NguoiChuTri Data="@lstUser" Style="Width: 100%" />
+</FormField>
+@* <FormField Text="Người phối hợp" Size="12">
+<RadzenDropDown Multiple="true" @bind-Value=@congviec.NguoiPhoiHopList AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+Chips=true ValueProperty="UserName" TextProperty="FullName" Data="@lstUser" Style="Width: 100%" 
+MaxSelectedLabels="100" />
+</FormField> *@
+   @*  <FormField Text="Đơn vị chủ trì" Size="3">
+<RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+ValueProperty="IdDonVi" TextProperty="TenDonVi" @bind-Value=@congviec.NguoiTao Style="Width: 100%" />
+</FormField>
+<FormField Text="Đơn vị phối hợp" Size="3">
+<RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+ValueProperty="IdDonVi" TextProperty="TenDonVi" @bind-Value=@congviec.NguoiTao Style="Width: 100%" />
+</FormField> *@
+
+<FormField Text="Ghi chú" Size="12">
+<RadzenTextBox @bind-Value=@congviec.GhiChu Style="Width: 100%" />
+</FormField>
+</div>
+
+@* /////////////////////////////////////////////
+//   TextBox Variable
+///////////////////////////////////////////// *@
+<FileBox @ref=grd query=@query lamda=@lamda
+OnDelete="@(args => Delete((tbFile)args))" 
+OnPreview="@(args => Preview((tbFile)args))" 
+OnDownload="@(args => Download((tbFile)args))" 
+ShowClose=true
+uploadFileList="@listUpload" 
+uploadFileListChanged="@(arg => ChangeUpload((List<FileUpload>)arg))" >
+</FileBox>
+@* /////////////////////////////////////////////////////////////////////////////////////////////////////////// *@
+</MoreForms>
+</Form>
+}
+
+@code {
+
+[Parameter] public tbCongViec Record { get; set; }
+[Parameter] public bool XacNhan { get; set; } = false;
+bool Loading = false;
+tbCongViec congviec = new tbCongViec();
+
+
+/////////////////////////////////////////////
+//   TextBox Variable
+/////////////////////////////////////////////
+List<tbUser> lstUser = new List<tbUser>();
+IList<string> values;
+bool isAccepted = false;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////
+//   FileBox Variable
+/////////////////////////////////////////////
+FileBox grd;
+string query=default!;
+string lamda;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+/////////////////////////////////////////////
+//   Minio and UploadFile Variable
+/////////////////////////////////////////////
+private List<tbFile> filesInMinio = new List<tbFile>();
+private string bucketName = "2025";
+
+<!-- #$Upload file -->
+List<FileUpload> listUpload = new List<FileUpload>();
+List<FileUpload> notAddedToCVYet = new List<FileUpload>();
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+protected override async Task OnInitializedAsync()
+{
+congviec = (Record == null || Record.IdCongViec == 0) ? congviec : Record;
+
+//Nếu có tài liệu đính kèm thì load tài liệu
+if(Record!=null && Record.IdTaiLieu!=null)
+{
+//Điều kiện để chọn các file tài liệu liên quan đến công việc
+var lstUid = Record.IdTaiLieu.Split("|").ToList();
+foreach (string uid in lstUid)
+{
+if ((lamda == null) && (uid != ""))
+lamda = "p.uid.Contains(\"" + uid + "\")";
+else
+{
+if (uid != "")
+lamda = lamda + "|| p.uid.Contains(\"" + uid + "\")";
+}
+}
+lamda = "p=>" + lamda;
+//Đường dẫn đến API
+query = "api/file/getallpaged";
+}
+
+
+//Lấy danh sách User
+lstUser = await apiService.GetAll<tbUser>("CongViecApiBaseUrl", "api/user/getallnopaged");
+
+}
+
+
+protected async Task Submit(tbCongViec congviec)
+{
+if (Record.IdCongViec == 0)
+{
+//Thêm mới một bản ghi
+congviec.IdCongViec = await client.numServices.GetInt<tbCongViec>("seq_tbCongViec");
+
+//luu truong file vao doi tuong cong viec
+foreach(var it in listUpload)
+{
+if (congviec.IdTaiLieu == null)
+{
+congviec.IdTaiLieu = "|" + it.uid + "|";
+}
+else
+{
+congviec.IdTaiLieu = congviec.IdTaiLieu + it.uid + "|";
+}
+}
+
+//2. Thêm dữ liệu vào bảng
+await apiService.Create<tbCongViec>(congviec);
+}
+else
+{
+//Cập nhật một bản ghi
+//1. Chuẩn bị dữ liệu (nếu có)
+foreach(var it in notAddedToCVYet)
+{
+if (congviec.IdTaiLieu == null)
+{
+congviec.IdTaiLieu = "|" + it.uid + "|";
+}
+else
+{
+congviec.IdTaiLieu = congviec.IdTaiLieu + it.uid + "|";
+}
+}
+//2. Thêm dữ liệu vào bảng
+await apiService.Update<tbCongViec>(congviec);
+}
+}
+
+
+/////////////////////////////////////////////
+//   FileBox Function
+/////////////////////////////////////////////
+protected async Task Delete(tbFile record)
+{
+var fileFolder = FormFileHelper.GetFileType(record.filename??"");
+RemoveObjectArgs args = new RemoveObjectArgs().WithBucket(record.bucket).WithObject(fileFolder+$"/{record.hash}{Path.GetExtension(record.filename)}");
+await minioService.GetClient().RemoveObjectAsync(args);
+string apiPath = "api/file";
+string lamda = $"p=>p.uid==\"{record.uid}\"";
+await apiService.Delete<tbFile>(lamda);
+notAddedToCVYet.RemoveAll(p => p.uid == record.uid);
+await grd.Refresh();
+}
+protected async Task Preview(tbFile record)
+{
+try
+{
+string token = linkService.GenerateOneTimeLink($"{record.hash}{Path.GetExtension(record.filename)}",record.bucket);
+string fileExtension = Path.GetExtension(record.filename).ToLower();
+
+var loaiFile = new HashSet<string> { ".mp3", ".mp4" };
+
+if (loaiFile.Contains(fileExtension))
+{
+await DialogService.OpenAsync("Xem trước", ds => (RenderFragment)(builder =>
+{
+builder.OpenElement(0, "div");
+builder.AddAttribute(1, "style", "display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;");
+
+builder.OpenElement(2, fileExtension == ".mp4" ? "video" : "audio");
+builder.AddMultipleAttributes(3, new Dictionary<string, object>
+{
+{ "src", $"/streaming-file?bucketName={record.bucket}&objectName={record.hash}{Path.GetExtension(record.filename)}" },
+{ "controls", true },
+{ "autoplay", true },
+{ "preload", "auto" }, 
+{ "style", "max-width: 90%; max-height: 90vh; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);" }
+});
+builder.CloseElement(); 
+
+builder.CloseElement();
+}),
+new DialogOptions 
+{ 
+Width = "60vw", 
+Height = "auto", 
+Resizable = false, 
+Draggable = false
+});
+
+}
+else{
+await JSRuntime.InvokeVoidAsync("eval", $"let _discard_ = open(`{token}`, `_blank`)");
+}
+}
+catch(Exception e){
+Console.WriteLine(e);
+}
+}
+protected async Task Download(tbFile record)
+{
+try
+{
+await JSRuntime.InvokeAsync<object>("open",
+$"/get-presigned-url?bucketName={record.bucket}&objectName={record.hash}{Path.GetExtension(record.filename)}",
+"_blank");
+}
+catch(Exception e){
+Console.WriteLine(e);
+}
+}
+
+<!-- #Function for TẢI LÊN button -->
+protected async Task ChangeUpload(List<FileUpload> uploads)
+{
+listUpload = uploads;
+List<string> listUploaded = listUpload.Select(item => item.uid).ToList();
+
+foreach (string uid in listUploaded)
+{
+if ((lamda == null) && (uid != ""))
+lamda = "p.uid.Contains(\"" + uid + "\")";
+else
+{
+if (uid != "")
+lamda = lamda + "|| p.uid.Contains(\"" + uid + "\")";
+}
+}
+lamda = "p=>" + lamda;
+//Đường dẫn đến API
+query = "api/file/getallpaged";
+
+
+// var existingFiles = await dbCongViec.tbFiles
+// .Where(f => listUploaded.Contains(f.uid))
+// .ToListAsync();
+
+// foreach (var upload in uploads)
+// {
+// var existingFile = existingFiles.FirstOrDefault(f => f.uid == upload.uid);
+
+// if (existingFile != null)
+// {
+// existingFile.filename = upload.fileName;
+// existingFile.bucket = upload.bucketName;
+// existingFile.hash = upload.hash;
+// existingFile.pageCount = upload.pageCount ?? 0;
+// existingFile.loaiFile = upload.loaiFile ?? "";
+// existingFile.fileContent = upload.fileContent ?? "";
+
+// dbCongViec.Update(existingFile);
+// }
+// else
+// {
+// var newFile = new tbFile
+// {
+// uid = upload.uid,
+// filename = upload.fileName,
+// bucket = upload.bucketName,
+// hash = upload.hash,
+// pageCount = upload.pageCount ?? 0,
+// loaiFile = upload.loaiFile ?? "",
+// fileContent = upload.fileContent ?? ""
+// };
+// dbCongViec.Add(newFile);
+// notAddedToCVYet.Add(upload); //add vao de xac dinh file nao moi
+// }
+// }
+// await dbCongViec.SaveChangesAsync();
+await grd.ForceRefresh();
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+}

@@ -1,0 +1,76 @@
+@page "/trang-thai-cong-viec"
+@using QLCongViec.Components
+@using QLCongViec.Models
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+
+<style>
+.rz-label {
+margin-bottom: 0;
+font-weight: bold;
+}
+
+.rz-column-title-content {
+font-weight: bold;
+}
+</style>
+
+<InlineAPI TItem="tbTrangThaiCongViec" TableTitle="DANH SÁCH TRẠNG THÁI CÔNG VIỆC" 
+   OnCreate="(data => Create((tbTrangThaiCongViec)data))"
+   OnUpdate="(data => Update((tbTrangThaiCongViec)data))"
+   OnDelete="(data => Delete((tbTrangThaiCongViec)data))">
+<MoreColumns>
+
+<RadzenDataGridColumn TItem="tbTrangThaiCongViec" Title="Tên trạng thái công việc" TextAlign="TextAlign.Left" Sortable="false"
+  Width="400px" Property="TenTrangThaiCongViec">
+<EditTemplate Context="ctx">
+<RadzenTextBox @bind-Value=@ctx.TenTrangThaiCongViec Style="width: 100%" Placeholder="" />
+</EditTemplate>
+</RadzenDataGridColumn>
+
+</MoreColumns>
+</InlineAPI>
+
+@code {
+InlineAPI<tbTrangThaiCongViec> grd;
+string query=default!;
+List<tbUser> lstUser = new List<tbUser>();
+protected override async Task OnInitializedAsync()
+{
+}
+
+protected async Task Create(tbTrangThaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//1. Chuẩn bị dữ liệu
+record.IdTrangThaiCongViec = await client.numServices.GetInt<tbTrangThaiCongViec>("seq_tbTrangThaiCongViec");
+//2. Thêm dữ liệu vào bảng
+await apiService.Create<tbTrangThaiCongViec>(record);
+}
+
+protected async Task Update(tbTrangThaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//Nếu là thêm mới
+if (record.IdTrangThaiCongViec == 0)
+{
+record.IdTrangThaiCongViec = await client.numServices.GetInt<tbTrangThaiCongViec>("seq_tbTrangThaiCongViec");
+//2. Thêm dữ liệu vào bảng
+await apiService.Create<tbTrangThaiCongViec>(record);
+}
+else
+{
+await apiService.Update<tbTrangThaiCongViec>(record);
+}
+}
+
+protected async Task Delete(tbTrangThaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//1. Chuẩn bị điều kiện
+string lamdaTemp = $"IdTrangThaiCongViec=={record.IdTrangThaiCongViec}";
+//2. Thêm dữ liệu vào bảng
+await apiService.Delete<tbTrangThaiCongViec>(lamdaTemp);
+}
+}

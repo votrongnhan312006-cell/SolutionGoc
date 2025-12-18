@@ -1,0 +1,109 @@
+@page "/phan-quyen-nguoi-dung"
+@using IDC.BlazorUi.Components.Components
+@using IDC.Frontend.Services.ApiService
+@using IDC.Frontend.Services.AuthServices
+@using QLCongViec.Models
+@using QLCongViec.Components
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+@inject AuthenServices autService
+@inject ClientServices client
+<style>
+.rz-label {
+margin-bottom: 0;
+font-weight: bold;
+}
+
+.rz-column-title-content {
+font-weight: bold;
+}
+</style>
+
+<TableAPI @ref=grd TItem="tbUser" TableTitle="DANH SÁCH NGƯỜI DÙNG" filter="@lamda"
+AddNew=false ShowClose=true>
+<AddMore>
+<div class="search-container">
+<!-- Hàng đầu tiên -->
+<div class="row">
+<div class="col-md-6">
+<RadzenLabel Text="Tên đăng nhập" />
+<RadzenTextBox @bind-Value=@username
+@onkeydown=@(args => SearchInputKeyPressed(args))
+Placeholder="Nhập tên đăng nhập..."
+Style="width: 100%;" />
+</div>
+<div class="col-md-6">
+<RadzenLabel Text="Họ tên người dùng:" />
+<RadzenTextBox @bind-Value=@fullname
+@onkeydown=@(args => SearchInputKeyPressed(args))
+Placeholder="Nhập họ tên người dùng..."
+Style="width: 100%;" />
+</div>
+</div>
+<!-- Hàng nút tìm kiếm -->
+<div class="search-button-group d-flex justify-content-between align-items-center flex-wrap" style="margin-top: 15px;">
+<div>
+<RadzenButton Icon="search" Click="@SearchVoid" Text="TÌM KIẾM" />
+<RadzenButton Icon="close" Click="@ResetVoid" Text="LÀM MỚI" />
+</div>
+</div>
+</div>
+
+</AddMore>
+<MoreColumns>
+<RadzenDataGridColumn TItem="tbUser" Title="Tên đăng nhập" TextAlign="TextAlign.Left" Sortable="false"
+Width="200px" Property="UserName" Frozen="true">
+</RadzenDataGridColumn>
+<RadzenDataGridColumn TItem="tbUser" Title="Tên người dùng" TextAlign="TextAlign.Left" Sortable="false"
+Width="100%" Property="FullName" Frozen="true">
+</RadzenDataGridColumn>
+</MoreColumns>
+<FormDialog Context="ctx">
+<QLPhanQuyenNguoiDung_Detail Record="ctx" />
+</FormDialog>
+</TableAPI>
+
+@code {
+string query = default!;
+string lamda = "";
+TableAPI<tbUser> grd;
+tbUser user = new tbUser();
+string username="";
+string fullname = "";
+List<tbUser> lstuser = new List<tbUser>();
+protected override async Task OnInitializedAsync()
+{
+//Lấy người dùng hiện tại
+string? username = await client.authServices.GetUserName();
+string filter = $"UserName==\"{username}\"";
+var user = await client.apiSevices.Get<tbUser>(filter);
+if (user.UserName.ToLower() == "systemadmin")
+{
+lamda = null;
+grd.Refresh();
+StateHasChanged();
+}
+}
+protected async Task SearchVoid()
+{
+ lamda = $"UserName.Contains(\"{username}\")";
+grd.Refresh();
+}
+
+protected async Task ResetVoid()
+{
+username = "";
+fullname = "";
+string lamda = null;
+grd.Refresh();
+await grd.Refresh();
+}
+
+private async Task SearchInputKeyPressed(KeyboardEventArgs args)
+{
+if (args.Key == "Enter")
+{
+await SearchVoid();
+}
+}
+}

@@ -1,0 +1,76 @@
+@page "/loai-cong-viec"
+@using QLCongViec.Components
+@using QLCongViec.Models
+@inject NotificationService notificationService
+@inject NavigationManager UriHelper
+@inject ApiServices apiService
+
+<style>
+.rz-label {
+margin-bottom: 0;
+font-weight: bold;
+}
+
+.rz-column-title-content {
+font-weight: bold;
+}
+</style>
+
+<InlineAPI TItem="tbLoaiCongViec" TableTitle="DANH SÁCH TRẠNG THÁI CÔNG VIỆC" 
+   OnCreate="(data => Create((tbLoaiCongViec)data))"
+   OnUpdate="(data => Update((tbLoaiCongViec)data))"
+   OnDelete="(data => Delete((tbLoaiCongViec)data))">
+<MoreColumns>
+
+<RadzenDataGridColumn TItem="tbLoaiCongViec" Title="Tên loại công việc" TextAlign="TextAlign.Left" Sortable="false"
+  Width="400px" Property="TenLoaiCongViec">
+<EditTemplate Context="ctx">
+<RadzenTextBox @bind-Value=@ctx.TenLoaiCongViec Style="width: 100%" Placeholder="" />
+</EditTemplate>
+</RadzenDataGridColumn>
+
+</MoreColumns>
+</InlineAPI>
+
+@code {
+InlineAPI<tbLoaiCongViec> grd;
+string query=default!;
+List<tbUser> lstUser = new List<tbUser>();
+protected override async Task OnInitializedAsync()
+{
+}
+
+protected async Task Create(tbLoaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//1. Chuẩn bị dữ liệu
+record.IdLoaiCongViec = await client.numServices.GetInt<tbLoaiCongViec>("seq_tbLoaiCongViec");
+//2. Thêm dữ liệu vào bảng
+await apiService.Create<tbLoaiCongViec>(record);
+}
+
+protected async Task Update(tbLoaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//Nếu là thêm mới
+if (record.IdLoaiCongViec == 0)
+{
+record.IdLoaiCongViec = await client.numServices.GetInt<tbLoaiCongViec>("seq_tbLoaiCongViec");
+//2. Thêm dữ liệu vào bảng
+await apiService.Create<tbLoaiCongViec>(record);
+}
+else
+{
+await apiService.Update<tbLoaiCongViec>(record);
+}
+}
+
+protected async Task Delete(tbLoaiCongViec record)
+{
+// Mặc định chỉ xuất hiện trong chỉnh sửa quy trình
+//1. Chuẩn bị điều kiện
+string lamdaTemp = $"IdLoaiCongViec=={record.IdLoaiCongViec}";
+//2. Thêm dữ liệu vào bảng
+await apiService.Delete<tbLoaiCongViec>(lamdaTemp);
+}
+}

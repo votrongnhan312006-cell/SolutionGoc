@@ -1,0 +1,59 @@
+@inject NavigationManager Navigation
+@inject DialogService DialogService
+
+<style>
+.full-screen-iframe {
+width: 100%;
+height: 100%;
+border: none;
+}
+
+.rz-dialog-content {
+display: flex;
+flex-direction: column;
+height: 100vh; 
+padding: 0;
+margin: 0;
+}
+
+.rz-dialog {
+max-width: 100vw !important;
+max-height: 100vh !important;
+width: 100vw !important;
+height: 100vh !important;
+padding-top: 35px; 
+}
+.rz-dialog-titlebar .rz-dialog-titlebar-close {
+position: absolute;
+right: 10px;
+top: 10px;
+z-index: 9999; 
+}
+</style>
+
+
+@if (!string.IsNullOrEmpty(CollaboraUrl))
+{
+<iframe src="@CollaboraUrl" class="full-screen-iframe"></iframe>
+}
+
+
+@code {
+[Parameter] public string? FileId { get; set; }
+[Parameter] public string? FolderName { get; set; }
+
+private string? CollaboraUrl;
+
+protected override void OnInitialized()
+{
+var wopiSrc = $"http://apiqlcongviec.6pg.org/wopi/files/{FolderName}/{FileId}"; // luu y port cua api
+var accessToken = "your-secure-token";
+CollaboraUrl = $"http://203.128.246.222:9980/browser/ded56d8ff7/cool.html?WOPISrc={Uri.EscapeDataString(wopiSrc)}&access_token={accessToken}";
+
+// var wopiSrc = $"http://lgsp.hvannd.edu.vn:8092/wopi/files/{FolderName}/{FileId}"; // luu y port cua api
+// var accessToken = "your-secure-token";
+// CollaboraUrl = $"http://172.15.41.7:9980/browser/f22c9fed45/cool.html?WOPISrc={Uri.EscapeDataString(wopiSrc)}&access_token={accessToken}";
+
+Console.WriteLine(CollaboraUrl);
+}
+}
