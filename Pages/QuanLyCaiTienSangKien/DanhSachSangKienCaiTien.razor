@@ -1,0 +1,412 @@
+﻿@page "/ChiTietDeXuatSkct"
+@using Radzen
+@using Radzen.Blazor
+@inject NotificationService NotificationService
+
+<!--==================== PHẦN HTML/MARKUP ====================-->
+
+<RadzenCard Style="padding:30px;max-width:1400px;margin:20px auto">
+    
+    <!-- TIÊU ĐỀ -->
+    <div style="text-align:center;margin-bottom:30px">
+        <h3 style="font-weight:bold;margin-bottom:10px">DANH SÁCH</h3>
+        <h4 style="font-weight:bold;margin-bottom:15px">
+            Sáng kiến, cải tiến năm học 
+            <RadzenTextBox @bind-Value="namHoc" Style="width:150px;display:inline-block" Placeholder="2024-2025" />
+        </h4>
+        <p style="font-style:italic;margin-bottom:5px">
+            (Kèm theo Quyết định: 
+            <RadzenTextBox @bind-Value="soQuyetDinh" Style="width:200px;display:inline-block" Placeholder="/QĐ-T01-CT" />
+            , ngày 
+            <RadzenTextBox @bind-Value="ngayQuyetDinh" Style="width:100px;display:inline-block" Placeholder="dd/MM/yyyy" />
+            của Giám đốc Học viện ANND)
+        </p>
+    </div>
+
+    <!-- PHẦN 1: SÁNG KIẾN -->
+    <div style="margin-bottom:40px">
+        <h5 style="font-weight:bold;margin-bottom:15px">1. Sáng kiến</h5>
+        
+        <RadzenDataGrid @ref="gridSangKien"
+                        Data="@danhSachSangKien"
+                        TItem="SangKienItem"
+                        AllowPaging="false"
+                        EditMode="DataGridEditMode.Single"
+                        RowUpdate="@OnUpdateSangKien"
+                        RowCreate="@OnCreateSangKien">
+            <Columns>
+                <!-- STT -->
+                <RadzenDataGridColumn Title="STT" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        @(danhSachSangKien.IndexOf(item) + 1)
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Tên sáng kiến -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="TenSangKien" 
+                                      Title="Tên sáng kiến"
+                                      Width="400px">
+                    <EditTemplate Context="item">
+                        <RadzenTextArea @bind-Value="item.TenSangKien" Style="width:100%" Rows="3" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Nhóm tác giả -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="NhomTacGia" 
+                                      Title="Nhóm tác giả"
+                                      Width="250px">
+                    <Template Context="item">
+                        <div>
+                            @foreach (var tacGia in item.NhomTacGia.Split('\n'))
+                            {
+                                <div>@tacGia</div>
+                            }
+                        </div>
+                    </Template>
+                    <EditTemplate Context="item">
+                        <RadzenTextArea @bind-Value="item.NhomTacGia" Style="width:100%" Rows="3" Placeholder="Mỗi tác giả một dòng" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Đơn vị -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="DonVi" 
+                                      Title="Đơn vị"
+                                      Width="200px">
+                    <EditTemplate Context="item">
+                        <RadzenTextBox @bind-Value="item.DonVi" Style="width:100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Thao tác -->
+                <RadzenDataGridColumn Title="Thao tác" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenButton Icon="edit" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => EditRow(item, danhSachSangKien))" />
+                        <RadzenButton Icon="delete" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Style="margin-left:5px"
+                                      Click="@(() => DeleteSangKien(item))" />
+                    </Template>
+                    <EditTemplate Context="item">
+                        <RadzenButton Icon="check" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Success"
+                                      Click="@(() => SaveRow(item, danhSachSangKien))" />
+                        <RadzenButton Icon="close" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Style="margin-left:5px"
+                                      Click="@(() => CancelEdit(item, danhSachSangKien))" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <!-- Nút thêm sáng kiến -->
+        <RadzenButton Text="Thêm sáng kiến" 
+                      Icon="add" 
+                      ButtonStyle="ButtonStyle.Success"
+                      Style="margin-top:15px"
+                      Click="@ThemSangKien" />
+    </div>
+
+    <!-- PHẦN 2: CẢI TIẾN -->
+    <div style="margin-bottom:40px">
+        <h5 style="font-weight:bold;margin-bottom:15px">2. Cải tiến</h5>
+        
+        <RadzenDataGrid @ref="gridCaiTien"
+                        Data="@danhSachCaiTien"
+                        TItem="SangKienItem"
+                        AllowPaging="false"
+                        EditMode="DataGridEditMode.Single"
+                        RowUpdate="@OnUpdateCaiTien"
+                        RowCreate="@OnCreateCaiTien">
+            <Columns>
+                <!-- STT -->
+                <RadzenDataGridColumn Title="STT" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        @(danhSachCaiTien.IndexOf(item) + 1)
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Tên cải tiến -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="TenSangKien" 
+                                      Title="Tên cải tiến"
+                                      Width="400px">
+                    <EditTemplate Context="item">
+                        <RadzenTextArea @bind-Value="item.TenSangKien" Style="width:100%" Rows="3" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Nhóm tác giả -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="NhomTacGia" 
+                                      Title="Nhóm tác giả"
+                                      Width="250px">
+                    <Template Context="item">
+                        <div>
+                            @foreach (var tacGia in item.NhomTacGia.Split('\n'))
+                            {
+                                <div>@tacGia</div>
+                            }
+                        </div>
+                    </Template>
+                    <EditTemplate Context="item">
+                        <RadzenTextArea @bind-Value="item.NhomTacGia" Style="width:100%" Rows="3" Placeholder="Mỗi tác giả một dòng" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Đơn vị -->
+                <RadzenDataGridColumn TItem="SangKienItem" 
+                                      Property="DonVi" 
+                                      Title="Đơn vị"
+                                      Width="200px">
+                    <EditTemplate Context="item">
+                        <RadzenTextBox @bind-Value="item.DonVi" Style="width:100%" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <!-- Thao tác -->
+                <RadzenDataGridColumn Title="Thao tác" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenButton Icon="edit" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => EditRow(item, danhSachCaiTien))" />
+                        <RadzenButton Icon="delete" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Style="margin-left:5px"
+                                      Click="@(() => DeleteCaiTien(item))" />
+                    </Template>
+                    <EditTemplate Context="item">
+                        <RadzenButton Icon="check" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Success"
+                                      Click="@(() => SaveRow(item, danhSachCaiTien))" />
+                        <RadzenButton Icon="close" 
+                                      Size="ButtonSize.Small" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Style="margin-left:5px"
+                                      Click="@(() => CancelEdit(item, danhSachCaiTien))" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <!-- Nút thêm cải tiến -->
+        <RadzenButton Text="Thêm cải tiến" 
+                      Icon="add" 
+                      ButtonStyle="ButtonStyle.Success"
+                      Style="margin-top:15px"
+                      Click="@ThemCaiTien" />
+    </div>
+
+    <!-- TỔNG KẾT -->
+    <div style="margin-bottom:30px;padding:15px;background:#f8f9fa;border-radius:8px">
+        <p style="font-style:italic;font-weight:500;margin:0">
+            Ấn định danh sách gồm: 
+            <strong>@danhSachSangKien.Count</strong> sáng kiến, 
+            <strong>@danhSachCaiTien.Count</strong> cải tiến.
+        </p>
+    </div>
+
+    <!-- BUTTONS -->
+    <div style="text-align:center;display:flex;gap:15px;justify-content:center">
+        <RadzenButton Text="Lưu danh sách" 
+                     Icon="save" 
+                     ButtonStyle="ButtonStyle.Primary" 
+                     Click="@LuuDanhSach" 
+                     Style="width:180px" />
+        
+        <RadzenButton Text="In danh sách" 
+                     Icon="print" 
+                     ButtonStyle="ButtonStyle.Info" 
+                     Click="@InDanhSach" 
+                     Style="width:180px" />
+        
+        <RadzenButton Text="Xuất Excel" 
+                     Icon="description" 
+                     ButtonStyle="ButtonStyle.Success" 
+                     Click="@XuatExcel" 
+                     Style="width:180px" />
+        
+        <RadzenButton Text="Hủy" 
+                     Icon="cancel" 
+                     ButtonStyle="ButtonStyle.Danger" 
+                     Variant="Variant.Outlined"
+                     Click="@Huy" 
+                     Style="width:150px" />
+    </div>
+
+</RadzenCard>
+
+<!--==================== PHẦN CODE C# ====================-->
+
+@code {
+
+    //---------- MODEL CLASS ----------
+
+    public class SangKienItem
+    {
+        public int Id { get; set; }
+        public string TenSangKien { get; set; } = string.Empty;
+        public string NhomTacGia { get; set; } = string.Empty;
+        public string DonVi { get; set; } = string.Empty;
+    }
+
+    //---------- PROPERTIES ----------
+
+    private string namHoc = "2024 - 2025";
+    private string soQuyetDinh = "/QĐ - T01 - CT";
+    private string ngayQuyetDinh = $"{DateTime.Now:dd/MM/yyyy}";
+
+    private List<SangKienItem> danhSachSangKien = new();
+    private List<SangKienItem> danhSachCaiTien = new();
+
+    private RadzenDataGrid<SangKienItem> gridSangKien;
+    private RadzenDataGrid<SangKienItem> gridCaiTien;
+
+    //---------- LIFECYCLE METHODS ----------
+
+    protected override void OnInitialized()
+    {
+        // Khởi tạo dữ liệu mẫu
+        danhSachSangKien = new List<SangKienItem>
+        {
+            new SangKienItem
+            {
+                Id = 1,
+                TenSangKien = "Thiết kế biểu trưng Đại hội đại biểu Đảng bộ Học viện ANND lần thứ XXIX nhiệm kỳ 2025 - 2030",
+                NhomTacGia = "Chu Quang Thiện\nPhạm Danh Vy\nTrần Thu Phương",
+                DonVi = "Phòng Chính trị"
+            }
+        };
+
+        danhSachCaiTien = new List<SangKienItem>
+        {
+            new SangKienItem
+            {
+                Id = 1,
+                TenSangKien = "Đổi mới nội dung giao chỉ tiêu công tác năm học tại Học viện An ninh nhân dân",
+                NhomTacGia = "Nguyễn Xuân Dương\nNguyễn Hùng Mạnh\nBùi Lê Huy",
+                DonVi = "Văn phòng\nHọc viện"
+            },
+            new SangKienItem
+            {
+                Id = 2,
+                TenSangKien = "Tâm lý học và ứng dụng thực tiễn trong công tác Công an",
+                NhomTacGia = "Nguyễn Văn Dũng\nPhạm Anh Tuấn\nDoãn Ngọc Đông",
+                DonVi = "Khoa\nLLCT&KHXHNV"
+            }
+        };
+    }
+
+    //---------- EDIT METHODS ----------
+
+    void EditRow(SangKienItem item, List<SangKienItem> list)
+    {
+        // Logic để vào chế độ edit
+    }
+
+    void SaveRow(SangKienItem item, List<SangKienItem> list)
+    {
+        // Logic lưu
+    }
+
+    void CancelEdit(SangKienItem item, List<SangKienItem> list)
+    {
+        // Logic hủy edit
+    }
+
+    void OnUpdateSangKien(SangKienItem item)
+    {
+        // Update sáng kiến
+    }
+
+    void OnCreateSangKien(SangKienItem item)
+    {
+        // Create sáng kiến mới
+        item.Id = danhSachSangKien.Max(x => x.Id) + 1;
+        danhSachSangKien.Add(item);
+    }
+
+    void OnUpdateCaiTien(SangKienItem item)
+    {
+        // Update cải tiến
+    }
+
+    void OnCreateCaiTien(SangKienItem item)
+    {
+        // Create cải tiến mới
+        item.Id = danhSachCaiTien.Max(x => x.Id) + 1;
+        danhSachCaiTien.Add(item);
+    }
+
+    //---------- ACTION METHODS ----------
+
+    void ThemSangKien()
+    {
+        var newItem = new SangKienItem
+        {
+            Id = danhSachSangKien.Any() ? danhSachSangKien.Max(x => x.Id) + 1 : 1,
+            TenSangKien = "",
+            NhomTacGia = "",
+            DonVi = ""
+        };
+        danhSachSangKien.Add(newItem);
+    }
+
+    void ThemCaiTien()
+    {
+        var newItem = new SangKienItem
+        {
+            Id = danhSachCaiTien.Any() ? danhSachCaiTien.Max(x => x.Id) + 1 : 1,
+            TenSangKien = "",
+            NhomTacGia = "",
+            DonVi = ""
+        };
+        danhSachCaiTien.Add(newItem);
+    }
+
+    void DeleteSangKien(SangKienItem item)
+    {
+        danhSachSangKien.Remove(item);
+    }
+
+    void DeleteCaiTien(SangKienItem item)
+    {
+        danhSachCaiTien.Remove(item);
+    }
+
+    void LuuDanhSach()
+    {
+        Console.WriteLine("Đang lưu danh sách...");
+        // Logic lưu vào database
+    }
+
+    void InDanhSach()
+    {
+        Console.WriteLine("Đang in danh sách...");
+        // Logic in
+    }
+
+    void XuatExcel()
+    {
+        Console.WriteLine("Đang xuất Excel...");
+        // Logic xuất Excel
+    }
+
+    void Huy()
+    {
+        Console.WriteLine("Hủy");
+        // NavigationManager.NavigateTo("/");
+    }
+}

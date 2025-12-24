@@ -1,0 +1,150 @@
+﻿@page "/NopKeHoachDuToan"
+@using Radzen
+@using Radzen.Blazor
+
+<style>
+    /* Tùy chỉnh để Tabs rõ ràng hơn */
+    .rz-tabview-nav-container {
+        margin-bottom: 10px;
+    }
+
+    .rz-tabs-item {
+        font-weight: bold;
+    }
+</style>
+
+
+<RadzenCard Style="max-width:1100px; margin:20px auto; padding:24px">
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Class="rz-mb-6">
+        <RadzenText TextStyle="TextStyle.H5" Weight="FontWeight.Bold" Class="rz-m-0">Nộp kế hoạch & dự toán</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-text-secondary-color)">Giáo trình Lập trình nâng cao</RadzenText>
+    </RadzenStack>
+
+    @* Sửa RenderMode sang Manual hoặc giữ Client nhưng đảm bảo cấu trúc thẻ *@
+    <RadzenTabs RenderMode="TabRenderMode.Client" Style="width:100%">
+        <Tabs>
+            <RadzenTabsItem Text="Kế hoạch biên soạn">
+                <RadzenCard Variant="Variant.Flat" Style="background: #fafafa; border: 1px solid #eaeaea;" Class="rz-mt-4 rz-p-4">
+
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Weight="FontWeight.Bold" Class="rz-mb-4">Thời gian thực hiện</RadzenText>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Ngày bắt đầu *" Style="display:block" Class="rz-mb-1" />
+                            <RadzenDatePicker @bind-Value="NgayBatDau" Style="width:100%" DateFormat="dd/MM/yyyy" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Ngày dự kiến hoàn thành *" Style="display:block" Class="rz-mb-1" />
+                            <RadzenDatePicker @bind-Value="NgayHoanThanh" Style="width:100%" DateFormat="dd/MM/yyyy" />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mb-4 rz-mt-4">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Weight="FontWeight.Bold" Class="rz-m-0">Các mốc công việc *</RadzenText>
+                        <RadzenButton Icon="add" Text="Thêm mốc" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Click="ThemMoc" />
+                    </RadzenStack>
+
+                    @foreach (var moc in MocCongViecs)
+                    {
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-7">
+                                <RadzenTextBox @bind-Value="moc.Ten" Placeholder="Tên mốc công việc (ví dụ: Nộp bản thảo...)" Style="width:100%" />
+                            </div>
+                            <div class="col-md-4">
+                                <RadzenDatePicker @bind-Value="moc.Ngay" Style="width:100%" DateFormat="dd/MM/yyyy" Placeholder="Ngày hết hạn" />
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Medium" Click="@(() => XoaMoc(moc))" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <RadzenLabel Text="Đính kèm đề cương chi tiết" Style="display:block" Class="rz-mb-1" />
+                        <RadzenUpload Style="width:100%" ChooseText="Nhấn để tải lên đề cương" Accept=".pdf,.doc,.docx" Url="upload/multiple" />
+                    </div>
+                </RadzenCard>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Dự toán kinh phí">
+                <RadzenCard Variant="Variant.Flat" Style="background: #fafafa; border: 1px solid #eaeaea;" Class="rz-mt-4 rz-p-4">
+
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Weight="FontWeight.Bold" Class="rz-mb-4">Chi tiết dự toán kinh phí *</RadzenText>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <RadzenLabel Text="Thù lao viết" Class="rz-mb-1" Style="display:block" />
+                            <RadzenNumeric TValue="decimal" @bind-Value="ThuLaoViet" Style="width:100%" Format="c0" />
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <RadzenLabel Text="Chi phí hội thảo" Class="rz-mb-1" Style="display:block" />
+                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiHoiThao" Style="width:100%" Format="c0" />
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <RadzenLabel Text="Chi phí thẩm định" Class="rz-mb-1" Style="display:block" />
+                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiThamDinh" Style="width:100%" Format="c0" />
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <RadzenLabel Text="Chi phí in ấn" Class="rz-mb-1" Style="display:block" />
+                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiInAn" Style="width:100%" Format="c0" />
+                        </div>
+                    </div>
+
+                    <RadzenAlert Severity="AlertSeverity.Success" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false" Class="rz-mt-2">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">Tổng kinh phí dự kiến:</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-m-0">@TongTien.ToString("N0") VND</RadzenText>
+                        </RadzenStack>
+                    </RadzenAlert>
+
+                    <div class="mt-4">
+                        <RadzenLabel Text="Đính kèm bảng dự toán chi tiết" Style="display:block" Class="rz-mb-1" />
+                        <RadzenUpload Style="width:100%" ChooseText="Nhấn để tải lên bảng dự toán" Accept=".pdf,.xls,.xlsx" Url="upload/multiple" />
+                    </div>
+                </RadzenCard>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Class="rz-mt-8">
+        <RadzenButton Text="Lưu nháp" Icon="save" ButtonStyle="ButtonStyle.Light" Style="min-width: 140px" />
+        <RadzenButton Text="Gửi kế hoạch" Icon="send" ButtonStyle="ButtonStyle.Primary" Style="min-width: 140px" />
+    </RadzenStack>
+
+</RadzenCard>
+
+@code {
+    DateTime? NgayBatDau = DateTime.Now;
+    DateTime? NgayHoanThanh = DateTime.Now.AddMonths(6);
+
+    public class MocCongViec
+    {
+        public string Ten { get; set; } = "";
+        public DateTime? Ngay { get; set; }
+    }
+
+    List<MocCongViec> MocCongViecs = new()
+    {
+        new() { Ten = "Hoàn thành đề cương chi tiết", Ngay = DateTime.Now.AddDays(15) },
+        new() { Ten = "Nộp bản thảo lần 1", Ngay = DateTime.Now.AddMonths(2) },
+        new() { Ten = "Tổ chức hội thảo", Ngay = DateTime.Now.AddMonths(4) },
+        new() { Ten = "Nộp bản thảo cuối", Ngay = DateTime.Now.AddMonths(6) }
+    };
+
+    void ThemMoc() => MocCongViecs.Add(new());
+    void XoaMoc(MocCongViec moc) => MocCongViecs.Remove(moc);
+
+    decimal ThuLaoViet;
+    decimal ChiPhiHoiThao;
+    decimal ChiPhiThamDinh;
+    decimal ChiPhiInAn;
+
+    decimal TongTien => ThuLaoViet + ChiPhiHoiThao + ChiPhiThamDinh + ChiPhiInAn;
+}

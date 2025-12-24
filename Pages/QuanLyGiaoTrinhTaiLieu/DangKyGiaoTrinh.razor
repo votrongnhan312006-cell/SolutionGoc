@@ -1,0 +1,346 @@
+@page "/DangKyGiaoTrinh"
+@using System.Globalization
+@using QLCongViec.Components.FileManager
+@using Minio
+@using Minio.DataModel
+@using Minio.DataModel.Args
+@using api.Models.QLBienSoan
+@* @implements IAsyncDisposable *@
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject NotificationService notificationService
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject AuthenServices authService
+@inject LinkService linkService
+@inject FileService fileService
+@inject MinioService minioService
+
+<style>
+    .rz-textbox {
+        width: 100%;
+    }
+
+    .rz-dialog-titlebar {
+        margin-left: 20px;
+    }
+</style>
+<style>
+    fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 0px 25px 30px 25px;
+        */ margin-bottom: 10px;
+        margin-top: 0px;
+    }
+
+    .filebox-fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 10px 13px 10px 13px;
+        margin-bottom: 40px; /* Lề dưới dày hơn */
+        margin-top: 0px;
+    }
+
+</style>
+<Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+<Form TItem="tbGTTL" Record="@giaoTrinhTaiLieu" OnSubmit="Submit">
+    <MoreForms>
+        <fieldset>
+
+
+            <div class="row">
+
+                <FormField Text="Tên giáo trình/tài liệu" Size="6">
+                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.tenGTTL" Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Loại hình biên soạn" Size="6">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstLoaiHinh"
+                                    ValueProperty="IdNhomLoaiGTTL"
+                                    TextProperty="LoaiGTTL"
+                                    @bind-Value="giaoTrinhTaiLieu.idNhomLoaiGTTL"
+                                    Style="width: 100%;" />
+                </FormField> 
+
+                <FormField Text="Học phần/Môn học dự kiến áp dụng" Size="6">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstMonHoc"
+                                    ValueProperty="IdMonHoc"
+                                    TextProperty="GhiChu"
+                                    @bind-Value="giaoTrinhTaiLieu.idMonHoc"
+                                    Style="width: 100%;" />
+                </FormField>
+
+                <FormField Text="Chọn trình độ" Size="6">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstBacHoc"
+                                    ValueProperty="IdBacHocSuDungGTTL"
+                                    TextProperty="BacHocSuDungGTTL"
+                                    @bind-Value="giaoTrinhTaiLieu.idBacHocSuDungGTTL"
+                                    Style="width: 100%;" />
+                </FormField>
+
+
+                <FormField Text="Đơn vị đề xuất" Size="6">
+                     @* <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.idDonVi" Style="width: 100%;" />  *@
+                </FormField>
+
+             <FormField Text="Dự kiến chủ biên" Size="6">
+                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.chuBien" Style="width: 100%;" />
+                </FormField>
+                <FormField Text="Thành viên tham gia" Size="12">
+                    <RadzenTextArea @bind-Value="giaoTrinhTaiLieu.thanhVien" Rows="3" Style="width: 100%;" />
+                </FormField>
+            </div>  
+
+        @* </fieldset>
+        <div class="col-12" style="margin:2%;"></div>
+        <!-- FileBox đính kèm văn bản đến -->
+        <fieldset class="filebox-fieldset">
+            <FileBox @ref="grd"
+                     filter="@lamda"
+                     OnDelete="Delete"
+                     ShowClose="true"
+                     uploadFileList="@listUpload"
+                     uploadFileListChanged="@(arg => ChangeUpload((List<FileUpload>)arg))">
+            </FileBox> *@
+        </fieldset>  
+    </MoreForms>
+</Form>
+
+
+
+@code {
+    // SỦA Ở ĐÂY
+    public tbGTTL? Record { get; set; }
+    bool isLoading = false;
+    tbGTTL giaoTrinhTaiLieu = new tbGTTL();
+
+    // List dropdown data - cần lấy từ API hoặc mock data ở đây
+    List<tbNhomLoaiGTTL> lstLoaiHinh = new List<tbNhomLoaiGTTL>();
+    List<tbMonHocGTTL> lstMonHoc = new List<tbMonHocGTTL>();
+    List<tbBacHocSuDungGTTL> lstBacHoc = new List<tbBacHocSuDungGTTL>();
+
+    /////////////////////////////////////////////
+    //   FileBox Variable
+    /////////////////////////////////////////////
+    // FileBox grd;
+    // string query = default!;
+    // string lamda;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    /////////////////////////////////////////////
+    //   Minio and UploadFile Variable
+    /////////////////////////////////////////////
+    // private List<tbFile> filesInMinio = new List<tbFile>();
+    // private string bucketName = "2025";
+
+    // <!-- #$Upload file -->
+    // List<FileUpload> listUpload = new List<FileUpload>();
+    List<FileUpload> notAddedToGTTLYet = new List<FileUpload>();
+    private bool _isSubmitted = false;
+    // private List<tbFile> pendingRestoreFiles = new List<tbFile>();
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await Task.Delay(100);
+        giaoTrinhTaiLieu = (Record == null || Record.idGTTL == 0) ? giaoTrinhTaiLieu : Record;
+
+        //Load data cho dropdown 
+        lstLoaiHinh = await apiService.GetAll<tbNhomLoaiGTTL>();
+        lstMonHoc = await apiService.GetAll<tbMonHocGTTL>();
+        lstBacHoc = await apiService.GetAll<tbBacHocSuDungGTTL>();
+
+        // Nếu có file đính kèm
+        // lamda = "";
+        // if (Record != null && Record.fileBanThao != null)
+        // {
+        //     Điều kiện để chọn các file tài liệu liên quan đến công việc
+        //     var lstUid = Record.fileBanThao.Split("|").ToList();
+        //     foreach (string uid in lstUid)
+        //     {
+        //         if ((String.IsNullOrEmpty(lamda)) && (uid != ""))
+        //             lamda = "uid.Contains(\"" + uid + "\")";
+        //         else
+        //         {
+        //             if (uid != "" && !String.IsNullOrEmpty(lamda))
+        //                 lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
+        //         }
+        //     }
+        // }
+        isLoading = false;
+    }
+
+   protected async Task Submit(tbGTTL giaoTrinhTaiLieu)
+    {
+        // if (notAddedToGTTLYet.Any())
+        // {
+        //     var newIds = string.Join("|", notAddedToGTTLYet.Select(it => it.uid));
+        //     if (!string.IsNullOrEmpty(giaoTrinhTaiLieu.fileBanThao))
+        //     {
+        //         giaoTrinhTaiLieu.fileBanThao += "|" + newIds;
+        //     }
+        //     else
+        //     {
+        //         giaoTrinhTaiLieu.fileBanThao = newIds;
+        //     }
+        // }
+
+        // Save logic - Tùy bạn là thêm mới hay cập nhật
+        if (Record == null || Record.idGTTL == 0)
+        {
+            //var username = await authService.GetUserName();
+           // giaoTrinhTaiLieu.idGTTL = await client.numServices.GetInt<tbGTTL>("seq_tbGTTL");
+            await apiService.Create<tbGTTL>(giaoTrinhTaiLieu);
+        }
+        else
+            await apiService.Update<tbGTTL>(giaoTrinhTaiLieu);
+
+        _isSubmitted = true;
+        notAddedToGTTLYet.Clear();
+    }
+
+    // public async ValueTask DisposeAsync()
+    // {
+    //     nếu delete file đã tồn tại thì ở đây đã ko còn nó nữa
+    //     var check = await apiService.GetAll<tbFile>();
+
+    //     Xóa mà không submit, ảnh hưởng đến các file đã từng đc lưu
+    //     if (!_isSubmitted && pendingRestoreFiles.Any())
+    //     {
+    //         foreach (var file in pendingRestoreFiles)
+    //         {
+    //             try
+    //             {
+    //                 if (check.Any(x => x.uid == file.uid))
+    //                     continue; tTránh chèn trùng nếu có sự cố
+
+    //                 await apiService.Create<tbFile>(file);
+    //             }
+    //             catch (Exception ex)
+    //             {
+    //                 Console.WriteLine($"[ERROR] Khôi phục file {file.uid} lỗi: {ex.Message}");
+    //             }
+    //         }
+    //         pendingRestoreFiles.Clear();
+    //     }
+
+    //     xóa file rác nếu chưa submit
+    //     if (notAddedToGTTLYet.Any()) nếu chưa submit hoặc không thêm mới file gì thì List này sẽ rỗng
+    //     {
+    //         foreach (var file in notAddedToGTTLYet)
+    //         {
+    //             int count = check.Count(item => item.hash == file.hash);
+    //             if (count == 1)
+    //             {
+    //                 var fileFolder = FormFileHelper.GetFileType(file.fileName ?? "");
+    //                 RemoveObjectArgs args = new RemoveObjectArgs().WithBucket(file.bucketName).WithObject(fileFolder + $"/{file.hash}{Path.GetExtension(file.fileName)}");
+    //                 await minioService.GetClient().RemoveObjectAsync(args);
+    //             }
+    //             string deletedLambda = $"uid==\"{file.uid}\"";
+    //             await apiService.Delete<tbFile>(deletedLambda);
+    //         }
+    //     }
+    // }
+
+    // /
+    //   FileBox Function
+    // /
+    // protected async Task Delete(tbFile record)
+    // {
+    //     if (!_isSubmitted || !notAddedToGTTLYet.Select(i => i.uid).ToList().Contains(record.uid))
+    //     {
+    //         pendingRestoreFiles.Add(record); Lưu lại file để phục hồi nếu người dùng không submit
+    //     }
+
+    //     string apiPath = "api/file";
+    //     string deletedLambda = $"p=>p.uid==\"{record.uid}\"";
+    //     await apiService.Delete<tbFile>(deletedLambda);
+    //     notAddedToGTTLYet.RemoveAll(p => p.uid == record.uid);
+    //     await grd.Refresh();
+    // }
+    
+
+    // <!-- #Function for TẢI LÊN button -->
+    // protected async Task ChangeUpload(List<FileUpload> uploads)
+    // {
+    //     listUpload = uploads;
+    //     List<string> listUploaded = listUpload.Select(item => item.uid).ToList();
+    //     if (uploads == null || !uploads.Any())
+    //     {
+    //         return;
+    //     }
+    //     foreach (string uid in listUploaded)
+    //     {
+    //         if (String.IsNullOrEmpty(lamda) && (uid != ""))
+    //             lamda = "uid.Contains(\"" + uid + "\")";
+    //         else
+    //         {
+    //             if (uid != "")
+    //                 lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
+    //         }
+    //     }
+    //     Đường dẫn đến API
+    //     List<tbFile> existingFiles = (await apiService.GetAll<tbFile>()).Where(f => listUploaded.Contains(f.uid))
+    //     .ToList();
+    //     foreach (var upload in uploads)
+    //     {
+    //         var existingFile = existingFiles.FirstOrDefault(f => f.uid == upload.uid);
+
+    //         if (existingFile != null)
+    //         {
+    //             existingFile.filename = upload.fileName;
+    //             existingFile.bucket = upload.bucketName;
+    //             existingFile.hash = upload.hash;
+    //             existingFile.pageCount = upload.pageCount ?? 0;
+    //             existingFile.loaiFile = upload.loaiFile ?? "";
+    //             existingFile.fileContent = upload.fileContent ?? "";
+
+    //             await apiService.Update<tbFile>(existingFile);
+    //         }
+    //         else
+    //         {
+    //             string uniqueUid = upload.uid;
+    //             List<string> existingUid = (await apiService.GetAll<tbFile>())
+    //             .Select(u => u.uid)
+    //             .ToList();
+
+
+    //             Kiểm tra xem uid đã tồn tại hay chưa (phòng khi upload.uid bị trùng)
+    //             if (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid))
+    //             {
+    //                 Tạo uid mới nếu bị trùng
+    //                 do
+    //                 {
+    //                     uniqueUid = Guid.NewGuid().ToString();
+    //                 }
+    //                 while (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid));
+    //             }
+
+    //             var newFile = new tbFile
+    //                 {
+    //                     uid = uniqueUid,
+    //                     filename = upload.fileName,
+    //                     bucket = upload.bucketName,
+    //                     hash = upload.hash,
+    //                     pageCount = upload.pageCount ?? 0,
+    //                     loaiFile = upload.loaiFile ?? "",
+    //                     fileContent = upload.fileContent ?? ""
+    //                 };
+    //             await apiService.Create<tbFile>(newFile);
+    //             notAddedToGTTLYet.Add(upload); Add để xác định xem file nào mới
+    //         }
+
+    //     }
+    //     await grd.ForceRefresh();
+    // }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Model phụ cho các dropdown option
+}
+

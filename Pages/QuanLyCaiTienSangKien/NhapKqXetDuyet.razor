@@ -1,0 +1,157 @@
+﻿@page "/NhapKqXetDuyetSkct"
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Style="padding:20px">
+    <h3>Danh sách sáng kiến cải tiến</h3>
+
+    <RadzenDataGrid Data="@dsSangKien"
+                    TItem="SangKienDto"
+                    AllowPaging="true"
+                    PageSize="10"
+                    AllowSorting="true">
+
+        <Columns>
+
+            <!-- STT -->
+            <RadzenDataGridColumn Title="STT" Width="60px">
+                <Template Context="item">
+                    @(dsSangKien.IndexOf(item) + 1)
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- Tên sáng kiến -->
+            <RadzenDataGridColumn TItem="SangKienDto"
+                                  Property="TenSangKien"
+                                  Title="Tên sáng kiến cải tiến" />
+
+            <!-- Loại -->
+            <RadzenDataGridColumn TItem="SangKienDto"
+                                  Property="LoaiSangKien"
+                                  Title="Loại sáng kiến cải tiến" />
+
+            <!-- Tác giả -->
+            <RadzenDataGridColumn TItem="SangKienDto"
+                                  Property="TacGia"
+                                  Title="Tác giả" />
+
+            <!-- Ngày gửi -->
+            <RadzenDataGridColumn Title="Ngày gửi">
+                <Template Context="item">
+                    @item.NgayGui.ToString("dd/MM/yyyy")
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- Trạng thái -->
+            <RadzenDataGridColumn Title="Trạng thái" Width="150px">
+                <Template Context="item">
+                    @if (item.TrangThai == 1)
+                    {
+                        <RadzenBadge Text="Được phê duyệt"
+                                     Style="background:#d4f7dc;color:#2e7d32" />
+                    }
+                    else if (item.TrangThai == 0)
+                    {
+                        <RadzenBadge Text="Chờ xét duyệt"
+                                     Style="background:#fff3cd;color:#856404" />
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="Không phê duyệt"
+                                     Style="background:#f8d7da;color:#721c24" />
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- Thao tác -->
+            <RadzenDataGridColumn Title="Thao tác" Width="160px">
+                <Template Context="item">
+                    <div style="display:flex; flex-direction:column; gap:6px">
+                        <RadzenButton Icon="visibility"
+                                      Text="Chi tiết"
+                                      Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => XemChiTiet(item.Id))" />
+
+                        <RadzenButton Icon="edit"
+                                      Text="Cập nhật"
+                                      Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@(() => XemChiTiet(item.Id))" />
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+
+
+        </Columns>
+    </RadzenDataGrid>
+    <RadzenButton Text="Xuất danh sách"
+                  ButtonStyle="ButtonStyle.Primary"
+                  ButtonType="ButtonType.Submit"
+                  Style="margin-top:20px" />
+</RadzenCard>
+
+@code {
+
+    // =======================
+    // MODEL (để chung trong file)
+    // =======================
+    class SangKienDto
+    {
+        public int Id { get; set; }
+        public string TenSangKien { get; set; } = string.Empty;
+        public string LoaiSangKien { get; set; } = string.Empty;
+        public string TacGia { get; set; } = string.Empty;
+        public DateTime NgayGui { get; set; }
+        public int TrangThai { get; set; }
+        // 0: Chờ xét duyệt | 1: Được phê duyệt | 2: Không phê duyệt
+    }
+
+    // =======================
+    // DATA
+    // =======================
+    List<SangKienDto> dsSangKien = new();
+
+    protected override void OnInitialized()
+    {
+        dsSangKien = new()
+        {
+            new SangKienDto
+            {
+                Id = 1,
+                TenSangKien = "Giáo trình Lập trình Web nâng cao",
+                LoaiSangKien = "Sáng kiến mới",
+                TacGia = "TS. Nguyễn Văn A",
+                NgayGui = new DateTime(2025,1,15),
+                TrangThai = 0
+            },
+            new SangKienDto
+            {
+                Id = 2,
+                TenSangKien = "Tài liệu thực hành Cơ sở dữ liệu",
+                LoaiSangKien = "Tài liệu cải tiến",
+                TacGia = "PGS.TS. Phạm Thị D",
+                NgayGui = new DateTime(2025,2,1),
+                TrangThai = 0
+            },
+            new SangKienDto
+            {
+                Id = 3,
+                TenSangKien = "Giáo trình Trí tuệ nhân tạo",
+                LoaiSangKien = "Chỉnh lý giáo trình",
+                TacGia = "GS.TS. Võ Văn F",
+                NgayGui = new DateTime(2025,1,20),
+                TrangThai = 0
+            }
+        };
+    }
+
+    // =======================
+    // ACTION
+    // =======================
+    void XemChiTiet(int id)
+    {
+        Console.WriteLine($"Xem chi tiết sáng kiến: {id}");
+        // NavigationManager.NavigateTo($"/chi-tiet/{id}");
+    }
+}

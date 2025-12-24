@@ -1,0 +1,63 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using QLCongViec.Models
+@inject DialogService DialogService
+
+<RadzenCard Style="padding:20px;max-height:80vh;overflow:auto">
+
+    <h4 style="font-weight:600;margin-bottom:16px">
+        @Model.TenTaiLieu
+    </h4>
+
+    <RadzenTabs>
+        <Tabs>
+
+            <!-- TAB 1: TỔNG QUAN -->
+            <RadzenTabsItem Text="Tổng quan">
+                <Info label="Loại hình">@Model.LoaiHinh</Info>
+                <Info label="Chủ biên">@Model.ChuBien</Info>
+                <Info label="Môn học">@Model.MonHoc</Info>
+                <Info label="Trình độ">@Model.TrinhDo</Info>
+                <Info label="Đơn vị">@Model.DonVi</Info>
+            </RadzenTabsItem>
+
+            <!-- TAB 2: TIẾN ĐỘ -->
+            <RadzenTabsItem Text="Tiến độ">
+                <RadzenTimeline>
+                    <RadzenTimelineItem Text="Gửi đề tài" />
+                    <RadzenTimelineItem Text="Đang biên soạn" />
+                    <RadzenTimelineItem Text="Hoàn thành" />
+                </RadzenTimeline>
+            </RadzenTabsItem>
+
+            <!-- TAB 3: TÀI LIỆU -->
+            <RadzenTabsItem Text="Tài liệu">
+                <RadzenCard Style="margin-bottom:10px">
+                    <b>Đề cương</b>
+                    <RadzenButton Icon="download"
+                                  Text="Tải"
+                                  Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" />
+                </RadzenCard>
+
+                <RadzenCard>
+                    <b>Bản thảo</b>
+                    <RadzenButton Icon="download"
+                                  Text="Tải"
+                                  Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" />
+                </RadzenCard>
+            </RadzenTabsItem>
+
+        </Tabs>
+    </RadzenTabs>
+
+    <RadzenButton Text="Đóng"
+                  Style="width:100%;margin-top:20px"
+                  ButtonStyle="ButtonStyle.Dark"
+                  Click="@(() => DialogService.Close())" />
+</RadzenCard>
+
+@code {
+    [Parameter] public DeXuatModel Model { get; set; } = default!;
+}

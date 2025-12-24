@@ -1,0 +1,140 @@
+@page "/danhsachdexuatgt"
+@using Radzen
+@using Radzen.Blazor
+@using api.Models.QLBienSoan
+@inject DialogService DialogService
+
+<RadzenCard Style="padding:20px">
+
+    <h4 style="font-weight:600">Danh sách đề xuất của đơn vị</h4>
+    <p style="color:#6c757d">
+        Theo dõi trạng thái các đề xuất biên soạn đã gửi
+    </p>
+
+    <RadzenDataGrid Data="@lstGTTL"
+                    TItem="tbGTTL"
+                    AllowPaging="true"
+                    PageSize="5"
+                    ShowPagingSummary="false">
+
+        <Columns>
+
+            <!-- STT -->
+            <RadzenDataGridColumn Title="STT" Width="60px">
+                <Template Context="item">
+                    @(lstGTTL.IndexOf(item) + 1)
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- TÊN TÀI LIỆU -->
+            <RadzenDataGridColumn Title="Tên tài liệu">
+                <Template Context="item">
+                    <a href="javascript:void(0)"
+                       style="color:#0d6efd;font-weight:500;cursor:pointer"
+                       @onclick="() => MoChiTietDeTai(item)">
+                        @item.tenGTTL
+                    </a>
+
+                    @if (!string.IsNullOrEmpty(item.ghiChu))
+                    {
+                        <div style="font-size:12px;color:#6c757d">
+                            @item.ghiChu
+                        </div>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- LOẠI HÌNH -->
+            <RadzenDataGridColumn Property="idNhomLoaiGTTL" Title="Loại hình" />
+
+            <!-- CHỦ BIÊN -->
+            <RadzenDataGridColumn Property="chuBien" Title="Chủ biên" />
+
+            <!-- NGÀY GỬI -->
+            <RadzenDataGridColumn Title="Ngày gửi">
+                <Template Context="item">
+                    @(item.ngayGuiDeXuat.HasValue
+                                        ? item.ngayGuiDeXuat.Value.ToString("dd/MM/yyyy")
+                                        : "")
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- TRẠNG THÁI -->
+            <RadzenDataGridColumn Title="Trạng thái">
+                <Template Context="item">
+                    @TrangThaiBadge(item.idTinhTrang)
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- THAO TÁC -->
+            <RadzenDataGridColumn Title="Thao tác" Width="90px">
+                <Template Context="item">
+                    <a href="javascript:void(0)"
+                       style="color:#0d6efd;font-weight:500;cursor:pointer"
+                       @onclick="() => MoChiTiet(item)">
+                        Chi tiết
+                    </a>
+                </Template>
+            </RadzenDataGridColumn>
+
+        </Columns>
+    </RadzenDataGrid>
+
+</RadzenCard>
+
+@code {
+
+    // ====== DATA ======
+    private List<tbGTTL> lstGTTL = new();
+    private tbGTTL? selectedItem;
+    // ====== POPUP CHI TIẾT ĐỀ TÀI ======
+    async Task MoChiTietDeTai(tbGTTL item)
+    {
+        await DialogService.OpenAsync<ChiTietDeTai_Dialog>(
+            "",
+            new Dictionary<string, object>
+            {
+                { "Model", item }
+            },
+            new DialogOptions
+            {
+                Width = "800px",
+                Height = "85vh",
+                ShowTitle = false
+            });
+    }
+
+    // ====== POPUP CHI TIẾT ĐỀ XUẤT ======
+    async Task MoChiTiet(tbGTTL item)
+    {
+        await DialogService.OpenAsync<ChiTietDeXuat_Dialog>(
+            "",
+            new Dictionary<string, object>
+            {
+                { "Model", item }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "80vh",
+                ShowTitle = false
+            });
+    }
+
+    // ====== BADGE TRẠNG THÁI ======
+    RenderFragment TrangThaiBadge(byte tinhTrang) => builder =>
+    {
+        var (text, color) = tinhTrang switch
+        {
+            1 => ("Được phê duyệt", "#d1f7dc"),
+            0 => ("Chờ xét duyệt", "#fff3cd"),
+            _ => ("Không phê duyệt", "#f8d7da")
+        };
+
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "style",
+            $"padding:5px 10px;border-radius:16px;background:{color}");
+        builder.AddContent(2, text);
+        builder.CloseElement();
+    };
+}

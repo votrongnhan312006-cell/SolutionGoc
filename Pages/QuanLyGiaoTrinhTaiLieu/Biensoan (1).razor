@@ -1,0 +1,156 @@
+﻿@page "/bien-soan"
+@using QLCongViec.Components
+@using QLCongViec.Models
+@using Radzen
+@using Radzen.Blazor
+
+@inject NotificationService notificationService
+
+<RadzenCard Style="max-width:1100px; margin:auto; padding:24px">
+
+    <!-- ===== TIÊU ĐỀ ===== -->
+    <div class="mb-4">
+        <h4 class="mb-1">Nộp kế hoạch & dự toán</h4>
+        <div class="text-muted">Giáo trình Lập trình nâng cao</div>
+    </div>
+
+    <!-- ===== TABS ===== -->
+    <RadzenTabs @bind-SelectedIndex="TabIndex">
+        <Tabs>
+
+            <!-- ================= TAB KẾ HOẠCH BIÊN SOẠN ================= -->
+            <RadzenTabsItem Text="KẾ HOẠCH BIÊN SOẠN">
+                <RadzenFieldset Text="Thời gian thực hiện" Style="margin-bottom:20px">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Ngày bắt đầu *" />
+                            <RadzenDatePicker @bind-Value="NgayBatDau" Style="width:100%" />
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Ngày dự kiến hoàn thành *" />
+                            <RadzenDatePicker @bind-Value="NgayHoanThanh" Style="width:100%" />
+                        </div>
+                    </div>
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Các mốc công việc *">
+                    @foreach (var moc in MocCongViecs)
+                    {
+                        <div class="row align-items-center mb-2">
+                            <div class="col-md-6">
+                                <RadzenTextBox @bind-Value="moc.Ten" Style="width:100%" />
+                            </div>
+                            <div class="col-md-4">
+                                <RadzenDatePicker @bind-Value="moc.Ngay" Style="width:100%" />
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => XoaMoc(moc))" />
+                            </div>
+                        </div>
+                    }
+
+                    <RadzenButton Icon="add"
+                                  Text="Thêm mốc"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Small"
+                                  Click="ThemMoc" />
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Đính kèm đề cương chi tiết" Style="margin-top:20px">
+                    <RadzenUpload Style="width:100%"
+                                  ChooseText="NHẤN ĐỂ TẢI LÊN ĐỀ CƯƠNG"
+                                  Change="@(args => FileDeCuongChiTiet = args.Files.FirstOrDefault()?.Name)" />
+                </RadzenFieldset>
+            </RadzenTabsItem>
+
+            <!-- ================= TAB DỰ TOÁN KINH PHÍ ================= -->
+            <RadzenTabsItem Text="DỰ TOÁN KINH PHÍ">
+                <RadzenFieldset Text="Chi tiết dự toán kinh phí *">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Thù lao viết" />
+                            <RadzenNumeric @bind-Value="ThuLaoViet" Style="width:100%" />
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Chi phí hội thảo" />
+                            <RadzenNumeric @bind-Value="ChiPhiHoiThao" Style="width:100%" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Chi phí thẩm định" />
+                            <RadzenNumeric @bind-Value="ChiPhiThamDinh" Style="width:100%" />
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenLabel Text="Chi phí in ấn" />
+                            <RadzenNumeric @bind-Value="ChiPhiInAn" Style="width:100%" />
+                        </div>
+                    </div>
+
+                    <RadzenAlert Severity="AlertSeverity.Info">
+                        <strong>Tổng kinh phí dự kiến:</strong>
+                        @TongTien.ToString("N0") VND
+                    </RadzenAlert>
+                </RadzenFieldset>
+
+                <RadzenFieldset Text="Đính kèm bảng dự toán chi tiết" Style="margin-top:20px">
+                    <RadzenUpload Style="width:100%"
+                                  ChooseText="NHẤN ĐỂ TẢI LÊN BẢNG DỰ TOÁN"
+                                  Change="@(args => FileDuToan = args.Files.FirstOrDefault()?.Name)" />
+                </RadzenFieldset>
+            </RadzenTabsItem>
+
+        </Tabs>
+    </RadzenTabs>
+
+    <!-- ===== ACTION BUTTONS ===== -->
+    <div class="d-flex justify-content-end mt-4 gap-2">
+        <RadzenButton Icon="save"
+                      Text="Lưu nháp"
+                      ButtonStyle="ButtonStyle.Light" />
+
+        <RadzenButton Icon="send"
+                      Text="Gửi kế hoạch"
+                      ButtonStyle="ButtonStyle.Primary" />
+    </div>
+
+</RadzenCard>
+
+@code {
+
+    int TabIndex = 0;
+
+    DateTime? NgayBatDau = DateTime.Today;
+    DateTime? NgayHoanThanh = DateTime.Today.AddMonths(6);
+
+    List<MocCongViec> MocCongViecs = new()
+    {
+        new() { Ten = "Hoàn thành đề cương chi tiết", Ngay = DateTime.Today.AddDays(15) },
+        new() { Ten = "Nộp bản thảo lần 1", Ngay = DateTime.Today.AddMonths(2) },
+        new() { Ten = "Tổ chức hội thảo", Ngay = DateTime.Today.AddMonths(4) },
+        new() { Ten = "Nộp bản thảo cuối", Ngay = DateTime.Today.AddMonths(6) }
+    };
+
+    void ThemMoc() => MocCongViecs.Add(new());
+    void XoaMoc(MocCongViec moc) => MocCongViecs.Remove(moc);
+
+    decimal ThuLaoViet;
+    decimal ChiPhiHoiThao;
+    decimal ChiPhiThamDinh;
+    decimal ChiPhiInAn;
+
+    decimal TongTien => ThuLaoViet + ChiPhiHoiThao + ChiPhiThamDinh + ChiPhiInAn;
+
+    string? FileDeCuongChiTiet;
+    string? FileDuToan;
+
+    class MocCongViec
+    {
+        public string? Ten { get; set; }
+        public DateTime? Ngay { get; set; }
+    }
+}

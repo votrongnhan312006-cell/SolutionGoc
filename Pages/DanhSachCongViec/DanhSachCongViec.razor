@@ -65,6 +65,8 @@
 <div class="table-scope" @oncontextmenu:preventDefault="true">
     <LoadingIndicator IsSearching="@isRadzenSearching" IsSaving="@isRadzenSaving" />
     <Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+    
+    
     <TableAPI @ref=grd TItem="tbCongViec" TableTitle="DANH SÁCH CÔNG VIỆC" FormTitle="THÔNG TIN CÔNG VIỆC" filter="@lamda_table"
               OnDelete="@(args => Delete((tbCongViec)args))" DeleteFunction="true" AddNew="false" isSearch="true" ShowClose="true" OnRowContextMenu="HandleRowContextMenu">
 
@@ -111,6 +113,8 @@
 
 
             </div>
+
+
             <!-- Hàng nút lệnh tách biệt, nền đậm -->
             <div class="action-bar d-flex justify-content-center align-items-center gap-3">
                 <RadzenButton Icon="search"
@@ -126,8 +130,27 @@
             </div>
 
         </AddMore>
+
+
+        @* Đây là chỗ để thêm cột *@
         <MoreColumns>
-            <RadzenDataGridColumn TItem="tbCongViec" Title="Tên công việc" TextAlign="TextAlign.Left" Sortable="false"
+
+
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Tên 1" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="300px" Property="TenCongViec" Frozen="true">
+                <Template Context="ctx">
+                    <WrapWord Data="aaaa" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Tên 2" TextAlign="TextAlign.Left" Sortable="false"
+                                  Width="200px" Property="TenCongViec" Frozen="true">
+                <Template Context="ctx">
+                    <WrapWord Data=@ctx.TenCongViec />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Tên 3" TextAlign="TextAlign.Left" Sortable="false"
                                   Width="400px" Property="TenCongViec" Frozen="true">
                 <Template Context="ctx">
                     <WrapWord Data=@ctx.TenCongViec />
@@ -146,7 +169,7 @@
                     @lstUser.Where(p => p.UserName == ctx.NguoiChuTri).FirstOrDefault()?.FullName
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="tbCongViec" Title="Ngày hoàn thành" TextAlign="TextAlign.Left" Sortable="false"
+            <RadzenDataGridColumn TItem="tbCongViec" Title="Ngày hoàn thành" TextAlign="TextAlign.Left" Sortable="true"
                                   Width="120px" Property="NgayHT">
             </RadzenDataGridColumn>
 
@@ -160,6 +183,7 @@
 @code {
     TableAPI<tbCongViec> grd;
     string query = default!;
+
     List<tbUser> lstUser = new List<tbUser>();
     tbUser user = new tbUser();
     string lamda_table = default!;
