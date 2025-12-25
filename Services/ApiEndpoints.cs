@@ -5,4 +5,5 @@ public static class ApiEndpoints
     public const string NguoiDung = "NguoiDung";
     public const string DanhMuc = "DanhMuc";
     public const string GiaoTrinh = "GiaoTrinh";
+    public const string CanBo = "CanBo";
 }

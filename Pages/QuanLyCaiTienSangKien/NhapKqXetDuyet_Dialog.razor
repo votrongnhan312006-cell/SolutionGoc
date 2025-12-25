@@ -1,258 +1,130 @@
-﻿@using Radzen
+﻿@using QLCongViec.Models.SangKienCaiTien
+@using Radzen
 @using Radzen.Blazor
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject NotificationService NotificationService
 
-<!--==================== PHẦN HTML/MARKUP ====================-->
+<RadzenCard Style="padding:30px; margin: 0 auto">
 
-<RadzenCard Style="padding:30px;max-width:1200px;margin:20px auto">
-    
-    <!-- TIÊU ĐỀ -->
-    <div style="text-align:center;margin-bottom:30px">
-        <h3 style="font-weight:bold">PHIẾU ĐÁNH GIÁ SÁNG KIẾN (CẢI TIẾN)</h3>
-        <h5>Năm học: <RadzenTextBox @bind-Value="namHoc" Style="width:150px" Placeholder="2024-2025" /></h5>
-    </div>
-
-    <!-- PHẦN I: THÔNG TIN CHUNG -->
-    <div style="margin-bottom:30px">
-        <h5 style="font-weight:bold;margin-bottom:15px">I. Thông tin chung</h5>
-
-        <!-- Câu 1 -->
-        <div style="margin-bottom:20px">
-            <label style="font-weight:600">1. Họ và tên cá nhân (nhóm) thực hiện sáng kiến hoặc cải tiến:</label>
-            
-            <div style="margin-top:10px;padding-left:20px">
-                <RadzenLabel Text="- Tác giả:" Style="display:inline-block;width:150px" />
-                <RadzenTextBox @bind-Value="tacGia" Style="width:300px;margin-right:20px" Placeholder="Nhập tên tác giả" />
-                <RadzenLabel Text="Cấp bậc, chức vụ:" Style="display:inline-block;width:120px" />
-                <RadzenTextBox @bind-Value="capBacTacGia" Style="width:300px" Placeholder="Nhập cấp bậc, chức vụ" />
-            </div>
-
-            <div style="margin-top:10px;padding-left:20px">
-                <RadzenLabel Text="- Đồng tác giả:" Style="display:inline-block;width:150px" />
-                <RadzenTextBox @bind-Value="dongTacGia" Style="width:300px;margin-right:20px" Placeholder="Nhập tên đồng tác giả" />
-                <RadzenLabel Text="Cấp bậc, chức vụ:" Style="display:inline-block;width:120px" />
-                <RadzenTextBox @bind-Value="capBacDongTacGia" Style="width:300px" Placeholder="Nhập cấp bậc, chức vụ" />
+    @if (Model == null)
+    {
+        <div style="text-align:center; padding:20px;">
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <p>Đang tải dữ liệu...</p>
+        </div>
+    }
+    else
+    {
+        <div style="text-align:center;margin-bottom:30px">
+            <h3 style="font-weight:bold">PHIẾU ĐÁNH GIÁ SÁNG KIẾN (CẢI TIẾN)</h3>
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px">
+                <h5>Năm học:</h5>
+                <RadzenTextBox @bind-Value="Model.namHoc" Style="width:150px" Placeholder="2024-2025" />
             </div>
         </div>
 
-        <!-- Câu 2 -->
-        <div style="margin-bottom:20px">
-            <RadzenLabel Text="2. Đơn vị công tác:" Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextBox @bind-Value="donViCongTac" Style="width:100%" Placeholder="Nhập đơn vị công tác" />
+        <div style="margin-bottom:30px">
+            <h5 style="font-weight:bold;margin-bottom:15px; color:#007bff">I. Thông tin chung</h5>
+
+            <div style="margin-bottom:20px">
+                <label style="font-weight:600">1. Họ và tên cá nhân (nhóm) thực hiện sáng kiến hoặc cải tiến:</label>
+
+                <div style="margin-top:10px;padding-left:20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+                    <RadzenLabel Text="- Tác giả:" Style="font-weight:bold; width:100px" />
+                    <RadzenTextBox @bind-Value="Model.tenTacGia" Style="flex:1; min-width:200px" Placeholder="Nhập tên tác giả" />
+
+                    <RadzenLabel Text="Cấp bậc/CV:" Style="font-weight:bold; width:100px" />
+                    <RadzenTextBox @bind-Value="Model.capBacTacGia" Style="flex:1; min-width:200px" Placeholder="Nhập cấp bậc" />
+                </div>
+
+                <div style="margin-top:10px;padding-left:20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+                    <RadzenLabel Text="- Đồng tác giả:" Style="font-weight:bold; width:100px" />
+                    <RadzenTextBox @bind-Value="Model.tenDongTacGia" Style="flex:1; min-width:200px" Placeholder="Nhập tên đồng tác giả" />
+
+                    <RadzenLabel Text="Cấp bậc/CV:" Style="font-weight:bold; width:100px" />
+                    <RadzenTextBox @bind-Value="Model.capBacDongTacGia" Style="flex:1; min-width:200px" Placeholder="Nhập cấp bậc" />
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px">
+                <RadzenLabel Text="2. Địa điểm/Đơn vị công tác:" Style="font-weight:600;display:block;margin-bottom:5px" />
+                <RadzenTextBox @bind-Value="Model.diaDiemThucHien" Style="width:100%" Placeholder="Nhập địa điểm thực hiện" />
+            </div>
+
+            <div style="margin-bottom:20px">
+                <RadzenLabel Text="3. Tên sáng kiến hoặc cải tiến:" Style="font-weight:600;display:block;margin-bottom:5px" />
+                <RadzenTextBox @bind-Value="Model.tenSangKienCaiTien" Style="width:100%" Placeholder="Nhập tên sáng kiến hoặc cải tiến" />
+            </div>
         </div>
 
-        <!-- Câu 3 -->
-        <div style="margin-bottom:20px">
-            <RadzenLabel Text="3. Tên sáng kiến hoặc cải tiến:" Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextBox @bind-Value="tenSangKien" Style="width:100%" Placeholder="Nhập tên sáng kiến hoặc cải tiến" />
-        </div>
-    </div>
+        <div style="margin-bottom:30px">
+            <h5 style="font-weight:bold;margin-bottom:15px; color:#007bff">II. Ý kiến đánh giá của đơn vị</h5>
 
-    <!-- PHẦN II: Ý KIẾN ĐÁNH GIÁ -->
-    <div style="margin-bottom:30px">
-        <h5 style="font-weight:bold;margin-bottom:15px">II. Ý kiến đánh giá của đơn vị</h5>
+            <div style="margin-bottom:20px">
+                <RadzenLabel Text="1. Mô tả nội dung/Hiệu quả" Style="font-weight:600;display:block;margin-bottom:5px" />
+                <RadzenTextArea @bind-Value="Model.moTa" Rows="4" Style="width:100%" Placeholder="Nhập mô tả chi tiết..." />
+            </div>
 
-        <!-- Câu 1 -->
-        <div style="margin-bottom:25px">
-            <RadzenLabel Text="1. Về hiệu quả thực tế của sáng kiến (cải tiến) khi triển khai" 
-                         Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextArea @bind-Value="hieuQuaThucTe" 
-                           Rows="5" 
-                           Style="width:100%" 
-                           Placeholder="Nhập đánh giá về hiệu quả thực tế..." />
+            <div style="margin-bottom:20px">
+                <RadzenLabel Text="2. Kết quả đạt được" Style="font-weight:600;display:block;margin-bottom:5px" />
+                <RadzenTextArea @bind-Value="Model.ketQua" Rows="4" Style="width:100%" Placeholder="Nhập kết quả thực tế..." />
+            </div>
+
+            <div style="margin-bottom:20px">
+                <RadzenLabel Text="3. Phạm vi thực hiện" Style="font-weight:600;display:block;margin-bottom:5px" />
+                <RadzenTextBox @bind-Value="Model.phamViThucHien" Style="width:100%" Placeholder="Nhập phạm vi áp dụng..." />
+            </div>
         </div>
 
-        <!-- Câu 2 -->
-        <div style="margin-bottom:25px">
-            <RadzenLabel Text="2. Khả năng duy trì, phát triển và mở rộng" 
-                         Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextArea @bind-Value="khaNangDuyTri" 
-                           Rows="5" 
-                           Style="width:100%" 
-                           Placeholder="Nhập đánh giá về khả năng duy trì, phát triển..." />
+        <div style="margin-top:40px;text-align:center;display:flex;gap:15px;justify-content:center">
+            <RadzenButton Text="Lưu kết quả" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@Luu" Style="width:150px" IsBusy="@isBusy" />
+            <RadzenButton Text="Đóng" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close(false))" Style="width:150px" Disabled="@isBusy" />
         </div>
-
-        <!-- Câu 3 -->
-        <div style="margin-bottom:25px">
-            <RadzenLabel Text="3. Tính sáng tạo, độc đáo của sáng kiến (cải tiến) trong triển khai áp dụng" 
-                         Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextArea @bind-Value="tinhSangTao" 
-                           Rows="5" 
-                           Style="width:100%" 
-                           Placeholder="Nhập đánh giá về tính sáng tạo, độc đáo..." />
-        </div>
-
-        <!-- Câu 4 -->
-        <div style="margin-bottom:25px">
-            <RadzenLabel Text="4. Kết luận" 
-                         Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenTextArea @bind-Value="ketLuan" 
-                           Rows="5" 
-                           Style="width:100%" 
-                           Placeholder="Nhập kết luận tổng hợp..." />
-        </div>
-
-        <!-- Điểm đánh giá -->
-        <div style="margin-bottom:25px;padding:20px;background:#f8f9fa;border-radius:8px">
-            <RadzenLabel Text="Điểm đánh giá:" Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenNumeric @bind-Value="diemDanhGia" 
-                          Min="0" 
-                          Max="100" 
-                          Style="width:150px;font-size:18px;font-weight:bold" 
-                          Placeholder="0-100" />
-            <span style="margin-left:10px;color:#6c757d">(Thang điểm 100)</span>
-        </div>
-
-        <!-- Xếp loại -->
-        <div style="margin-bottom:25px">
-            <RadzenLabel Text="Xếp loại:" Style="font-weight:600;display:block;margin-bottom:10px" />
-            <RadzenDropDown @bind-Value="xepLoai" 
-                           Data="@danhSachXepLoai" 
-                           Style="width:300px" 
-                           Placeholder="Chọn xếp loại" />
-        </div>
-    </div>
-
-    <!-- PHẦN KÝ TÊN -->
-    <div style="margin-top:40px;display:flex;justify-content:space-between">
-        <!-- Chủ tịch hội đồng -->
-        <div style="text-align:center;width:45%">
-            <p style="font-weight:600;margin-bottom:60px">CHỦ TỊCH HỘI ĐỒNG</p>
-            <RadzenTextBox @bind-Value="chuTichHoiDong" 
-                          Style="width:100%;text-align:center;font-weight:600" 
-                          Placeholder="Nhập họ tên" />
-        </div>
-
-        <!-- Thư ký -->
-        <div style="text-align:center;width:45%">
-            <p style="font-weight:600;margin-bottom:60px">THƯ KÝ</p>
-            <RadzenTextBox @bind-Value="thuKy" 
-                          Style="width:100%;text-align:center;font-weight:600" 
-                          Placeholder="Nhập họ tên" />
-        </div>
-    </div>
-
-    <!-- BUTTONS -->
-    <div style="margin-top:40px;text-align:center;display:flex;gap:15px;justify-content:center">
-        <RadzenButton Text="Lưu nháp" 
-                     Icon="save" 
-                     ButtonStyle="ButtonStyle.Secondary" 
-                     Click="@LuuNhap" 
-                     Style="width:150px" />
-        
-        <RadzenButton Text="Gửi đánh giá" 
-                     Icon="send" 
-                     ButtonStyle="ButtonStyle.Success" 
-                     Click="@GuiDanhGia" 
-                     Style="width:150px" />
-        
-        <RadzenButton Text="In phiếu" 
-                     Icon="print" 
-                     ButtonStyle="ButtonStyle.Info" 
-                     Click="@InPhieu" 
-                     Style="width:150px" />
-        
-        <RadzenButton Text="Hủy" 
-                     Icon="cancel" 
-                     ButtonStyle="ButtonStyle.Danger" 
-                     Variant="Variant.Outlined"
-                     Click="@Huy" 
-                     Style="width:150px" />
-    </div>
+    }
 
 </RadzenCard>
 
-<!--==================== PHẦN CODE C# ====================-->
-
+@inject ApiServices apiService
 @code {
+    // Nhận ID từ trang cha
+    [Parameter] public int idSangKienCaiTien { get; set; }
 
-    //---------- PROPERTIES - THÔNG TIN CHUNG ----------
+    private tbSangKienCaiTien? Model;
+    private bool isBusy = false;
 
-    private string namHoc = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
-
-    private string tacGia = string.Empty;
-    private string capBacTacGia = string.Empty;
-    private string dongTacGia = string.Empty;
-    private string capBacDongTacGia = string.Empty;
-    private string donViCongTac = string.Empty;
-    private string tenSangKien = string.Empty;
-
-    //---------- PROPERTIES - Ý KIẾN ĐÁNH GIÁ ----------
-
-    private string hieuQuaThucTe = string.Empty;
-    private string khaNangDuyTri = string.Empty;
-    private string tinhSangTao = string.Empty;
-    private string ketLuan = string.Empty;
-    private decimal diemDanhGia = 0;
-    private string xepLoai = string.Empty;
-
-    //---------- PROPERTIES - KÝ TÊN ----------
-
-    private string chuTichHoiDong = string.Empty;
-    private string thuKy = string.Empty;
-
-    //---------- DATA ----------
-
-    private List<string> danhSachXepLoai = new()
+    protected override async Task OnInitializedAsync()
     {
-        "Xuất sắc",
-        "Tốt",
-        "Khá",
-        "Trung bình",
-        "Yếu"
-    };
+        // ta gọi GetAll rồi lọc (vì ApiServices của bạn chưa có GetById)
+        var listData = await apiService.GetAll<tbSangKienCaiTien>();
 
-    //---------- LIFECYCLE METHODS ----------
+        // Tìm bản ghi có id khớp với tham số truyền vào
+        Model = listData?.FirstOrDefault(x => x.idSangKienCaiTien == idSangKienCaiTien);
 
-    protected override void OnInitialized()
-    {
-        // Khởi tạo dữ liệu mẫu nếu cần
-        // LoadDuLieu();
+        // Nếu không tìm thấy hoặc null, khởi tạo mới
+        if (Model == null) Model = new tbSangKienCaiTien();
     }
 
-    //---------- EVENT HANDLERS ----------
-
-    private void LuuNhap()
+    private async Task Luu()
     {
-        Console.WriteLine("Đang lưu nháp...");
-        // Logic lưu nháp
-    }
+        if (Model == null) return;
 
-    private void GuiDanhGia()
-    {
-        // Validate dữ liệu
-        if (string.IsNullOrEmpty(tacGia))
+        try
         {
-            Console.WriteLine("Vui lòng nhập tên tác giả!");
-            return;
-        }
+            await apiService.Update<tbSangKienCaiTien>(Model);
+            isBusy = true;
 
-        if (string.IsNullOrEmpty(tenSangKien))
+            DialogService.Close(true);
+
+            // Nếu muốn gọi API Update thật sự, bạn cần bổ sung hàm Update vào ApiServices (xem Cách 2)
+        }
+        catch (Exception ex)
         {
-            Console.WriteLine("Vui lòng nhập tên sáng kiến!");
-            return;
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Lỗi", Detail = "Có lỗi xảy ra: " + ex.Message });
         }
-
-        if (diemDanhGia <= 0)
+        finally
         {
-            Console.WriteLine("Vui lòng nhập điểm đánh giá!");
-            return;
+            isBusy = false;
         }
-
-        Console.WriteLine("Đang gửi đánh giá...");
-        // Logic gửi đánh giá
-        // await DanhGiaService.GuiDanhGia(...)
-    }
-
-    private void InPhieu()
-    {
-        Console.WriteLine("Đang in phiếu...");
-        // Logic in phiếu
-        // window.print() hoặc export PDF
-    }
-
-    private void Huy()
-    {
-        Console.WriteLine("Hủy form");
-        // NavigationManager.NavigateTo("/danh-sach-sang-kien");
     }
 }

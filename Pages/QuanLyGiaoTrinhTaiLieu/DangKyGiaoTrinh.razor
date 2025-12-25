@@ -4,8 +4,8 @@
 @using Minio
 @using Minio.DataModel
 @using Minio.DataModel.Args
+@using QLCongViec.Models
 @using api.Models.QLBienSoan
-@* @implements IAsyncDisposable *@
 @inject IConfiguration Configuration
 @inject IJSRuntime JSRuntime
 @inject NotificationService notificationService
@@ -43,78 +43,99 @@
     }
 
 </style>
+<style>
+    .form-wrapper{
+        border: 2px solid #dedede;
+        border-radius: 10px;
+        padding: 20px 10px 10px 10px !important;
+        margin-top: 8px !important;
+        background: #ffffff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    
+</style>
+
 <Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
 <Form TItem="tbGTTL" Record="@giaoTrinhTaiLieu" OnSubmit="Submit">
     <MoreForms>
+
+        <div style="margin-top:16px;margin-left: 16px;margin-bottom: 35px;display:block;line-height: 0.3;" class="rz-label">
+           <h2>Đăng ký quản lý sáng kiến / cải tiến</h2>
+           <tr>Vui lòng điền đầy đủ thông tin để đăng ký đề xuất biên soạn giáo trình/tài liệu</tr>
+       </div>
         <fieldset>
 
-
-            <div class="row">
-
-                <FormField Text="Tên giáo trình/tài liệu" Size="6">
-                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.tenGTTL" Style="width: 100%;" />
+                <RadzenLabel Text="1. Tên giáo trình/Tài liệu *"
+                             Style="margin-top:16px;display:block;" />
+                <FormField Text="Tên giáo trình tài liệu" Size="12">
+                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.TenGTTL" Style="width: 100%;" />
                 </FormField>
 
-                <FormField Text="Loại hình biên soạn" Size="6">
+                <RadzenLabel Text="2.Loại hình biên soạn *" 
+                     Style="margin-top:16px;display:block;" />
+                <FormField Text="--Chọn loại hình--" Size="12">
                     <RadzenDropDown AllowClear="true"
                                     Data="@lstLoaiHinh"
                                     ValueProperty="IdNhomLoaiGTTL"
                                     TextProperty="LoaiGTTL"
-                                    @bind-Value="giaoTrinhTaiLieu.idNhomLoaiGTTL"
-                                    Style="width: 100%;" />
-                </FormField> 
-
-                <FormField Text="Học phần/Môn học dự kiến áp dụng" Size="6">
-                    <RadzenDropDown AllowClear="true"
-                                    Data="@lstMonHoc"
-                                    ValueProperty="IdMonHoc"
-                                    TextProperty="GhiChu"
-                                    @bind-Value="giaoTrinhTaiLieu.idMonHoc"
+                                    @bind-Value="giaoTrinhTaiLieu.IdNhomLoaiGTTL"
                                     Style="width: 100%;" />
                 </FormField>
 
-                <FormField Text="Chọn trình độ" Size="6">
+
+                <RadzenLabel Text="3.Học phần/Môn học dự kiến sử dụng *"
+                             Style="margin-top:16px;display:block;" />
+                <FormField Text="--Chọn môn học--" Size="12">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstMonHoc"
+                                    ValueProperty="IdMonHocGTTL"
+                                    TextProperty="GhiChu"
+                                    @bind-Value="giaoTrinhTaiLieu.IdMonHoc"
+                                    Style="width: 100%;" />
+                </FormField>
+
+                <RadzenLabel Text="4.Trình độ áp dụng *"
+                             Style="margin-top:16px;display:block;" />
+                <FormField Text="--Chọn trình độ" Size="12">
                     <RadzenDropDown AllowClear="true"
                                     Data="@lstBacHoc"
                                     ValueProperty="IdBacHocSuDungGTTL"
                                     TextProperty="BacHocSuDungGTTL"
-                                    @bind-Value="giaoTrinhTaiLieu.idBacHocSuDungGTTL"
+                                    @bind-Value="giaoTrinhTaiLieu.IdBacHocSuDungGTTL"
                                     Style="width: 100%;" />
                 </FormField>
 
-
-                <FormField Text="Đơn vị đề xuất" Size="6">
-                     @* <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.idDonVi" Style="width: 100%;" />  *@
+                <RadzenLabel Text="5.Đơn vị đề xuất"
+                             Style="margin-top:16px;display:block;" />
+                <FormField Text="Đơn vị đề xuất" Size="12">
+                    <RadzenDropDown AllowClear="true"
+                                    Data="@lstDonVi"
+                                    ValueProperty="IdDonVi"
+                                    TextProperty="DonVi"
+                                    @bind-Value="giaoTrinhTaiLieu.IdDonVi"
+                                    Style="width: 100%;" />
                 </FormField>
 
-             <FormField Text="Dự kiến chủ biên" Size="6">
-                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.chuBien" Style="width: 100%;" />
+                <RadzenLabel Text="6.Chủ biên dự kiến *"
+                             Style="margin-top:16px;display:block;" />
+                <FormField Text="Chủ biên dự kiến" Size="12">
+                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.ChuBien" Style="width: 100%;" />
                 </FormField>
+
+                <RadzenLabel Text="7.Thành viên" 
+                     Style="margin-top:16px;display:block;" />
                 <FormField Text="Thành viên tham gia" Size="12">
-                    <RadzenTextArea @bind-Value="giaoTrinhTaiLieu.thanhVien" Rows="3" Style="width: 100%;" />
+                    <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.ThanhVien" Style="width: 100%;" />
                 </FormField>
-            </div>  
 
-        @* </fieldset>
-        <div class="col-12" style="margin:2%;"></div>
-        <!-- FileBox đính kèm văn bản đến -->
-        <fieldset class="filebox-fieldset">
-            <FileBox @ref="grd"
-                     filter="@lamda"
-                     OnDelete="Delete"
-                     ShowClose="true"
-                     uploadFileList="@listUpload"
-                     uploadFileListChanged="@(arg => ChangeUpload((List<FileUpload>)arg))">
-            </FileBox> *@
-        </fieldset>  
+        </fieldset>
     </MoreForms>
 </Form>
 
-
-
 @code {
     // SỦA Ở ĐÂY
-    public tbGTTL? Record { get; set; }
+    [Parameter] public tbGTTL Record { get; set; }
     bool isLoading = false;
     tbGTTL giaoTrinhTaiLieu = new tbGTTL();
 
@@ -122,225 +143,44 @@
     List<tbNhomLoaiGTTL> lstLoaiHinh = new List<tbNhomLoaiGTTL>();
     List<tbMonHocGTTL> lstMonHoc = new List<tbMonHocGTTL>();
     List<tbBacHocSuDungGTTL> lstBacHoc = new List<tbBacHocSuDungGTTL>();
-
-    /////////////////////////////////////////////
-    //   FileBox Variable
-    /////////////////////////////////////////////
-    // FileBox grd;
-    // string query = default!;
-    // string lamda;
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    /////////////////////////////////////////////
-    //   Minio and UploadFile Variable
-    /////////////////////////////////////////////
-    // private List<tbFile> filesInMinio = new List<tbFile>();
-    // private string bucketName = "2025";
-
-    // <!-- #$Upload file -->
-    // List<FileUpload> listUpload = new List<FileUpload>();
-    List<FileUpload> notAddedToGTTLYet = new List<FileUpload>();
-    private bool _isSubmitted = false;
-    // private List<tbFile> pendingRestoreFiles = new List<tbFile>();
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    List<tbDonVi> lstDonVi = new List<tbDonVi>();
 
 
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
         await Task.Delay(100);
-        giaoTrinhTaiLieu = (Record == null || Record.idGTTL == 0) ? giaoTrinhTaiLieu : Record;
+        giaoTrinhTaiLieu = (Record == null || Record.IdGTTL == 0) ? giaoTrinhTaiLieu : Record;
 
-        //Load data cho dropdown 
         lstLoaiHinh = await apiService.GetAll<tbNhomLoaiGTTL>();
         lstMonHoc = await apiService.GetAll<tbMonHocGTTL>();
         lstBacHoc = await apiService.GetAll<tbBacHocSuDungGTTL>();
+        lstDonVi = await apiService.GetAll<tbDonVi>();
 
-        // Nếu có file đính kèm
-        // lamda = "";
-        // if (Record != null && Record.fileBanThao != null)
-        // {
-        //     Điều kiện để chọn các file tài liệu liên quan đến công việc
-        //     var lstUid = Record.fileBanThao.Split("|").ToList();
-        //     foreach (string uid in lstUid)
-        //     {
-        //         if ((String.IsNullOrEmpty(lamda)) && (uid != ""))
-        //             lamda = "uid.Contains(\"" + uid + "\")";
-        //         else
-        //         {
-        //             if (uid != "" && !String.IsNullOrEmpty(lamda))
-        //                 lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
-        //         }
-        //     }
-        // }
         isLoading = false;
     }
 
-   protected async Task Submit(tbGTTL giaoTrinhTaiLieu)
+    protected async Task Submit(tbGTTL giaoTrinhTaiLieu)
     {
-        // if (notAddedToGTTLYet.Any())
-        // {
-        //     var newIds = string.Join("|", notAddedToGTTLYet.Select(it => it.uid));
-        //     if (!string.IsNullOrEmpty(giaoTrinhTaiLieu.fileBanThao))
-        //     {
-        //         giaoTrinhTaiLieu.fileBanThao += "|" + newIds;
-        //     }
-        //     else
-        //     {
-        //         giaoTrinhTaiLieu.fileBanThao = newIds;
-        //     }
-        // }
-
         // Save logic - Tùy bạn là thêm mới hay cập nhật
-        if (Record == null || Record.idGTTL == 0)
+        if (Record == null || Record.IdGTTL == 0)
         {
-            //var username = await authService.GetUserName();
-           // giaoTrinhTaiLieu.idGTTL = await client.numServices.GetInt<tbGTTL>("seq_tbGTTL");
+            giaoTrinhTaiLieu.IdGTTL = await client.numServices.GetInt<tbGTTL>("seq_tbGTTL");
             await apiService.Create<tbGTTL>(giaoTrinhTaiLieu);
         }
         else
             await apiService.Update<tbGTTL>(giaoTrinhTaiLieu);
 
-        _isSubmitted = true;
-        notAddedToGTTLYet.Clear();
+        Console.WriteLine(
+System.Text.Json.JsonSerializer.Serialize(giaoTrinhTaiLieu)
+);
+
+        notificationService.Notify(
+NotificationSeverity.Info,
+"Debug",
+"Đã vào Submit()"
+);
     }
 
-    // public async ValueTask DisposeAsync()
-    // {
-    //     nếu delete file đã tồn tại thì ở đây đã ko còn nó nữa
-    //     var check = await apiService.GetAll<tbFile>();
-
-    //     Xóa mà không submit, ảnh hưởng đến các file đã từng đc lưu
-    //     if (!_isSubmitted && pendingRestoreFiles.Any())
-    //     {
-    //         foreach (var file in pendingRestoreFiles)
-    //         {
-    //             try
-    //             {
-    //                 if (check.Any(x => x.uid == file.uid))
-    //                     continue; tTránh chèn trùng nếu có sự cố
-
-    //                 await apiService.Create<tbFile>(file);
-    //             }
-    //             catch (Exception ex)
-    //             {
-    //                 Console.WriteLine($"[ERROR] Khôi phục file {file.uid} lỗi: {ex.Message}");
-    //             }
-    //         }
-    //         pendingRestoreFiles.Clear();
-    //     }
-
-    //     xóa file rác nếu chưa submit
-    //     if (notAddedToGTTLYet.Any()) nếu chưa submit hoặc không thêm mới file gì thì List này sẽ rỗng
-    //     {
-    //         foreach (var file in notAddedToGTTLYet)
-    //         {
-    //             int count = check.Count(item => item.hash == file.hash);
-    //             if (count == 1)
-    //             {
-    //                 var fileFolder = FormFileHelper.GetFileType(file.fileName ?? "");
-    //                 RemoveObjectArgs args = new RemoveObjectArgs().WithBucket(file.bucketName).WithObject(fileFolder + $"/{file.hash}{Path.GetExtension(file.fileName)}");
-    //                 await minioService.GetClient().RemoveObjectAsync(args);
-    //             }
-    //             string deletedLambda = $"uid==\"{file.uid}\"";
-    //             await apiService.Delete<tbFile>(deletedLambda);
-    //         }
-    //     }
-    // }
-
-    // /
-    //   FileBox Function
-    // /
-    // protected async Task Delete(tbFile record)
-    // {
-    //     if (!_isSubmitted || !notAddedToGTTLYet.Select(i => i.uid).ToList().Contains(record.uid))
-    //     {
-    //         pendingRestoreFiles.Add(record); Lưu lại file để phục hồi nếu người dùng không submit
-    //     }
-
-    //     string apiPath = "api/file";
-    //     string deletedLambda = $"p=>p.uid==\"{record.uid}\"";
-    //     await apiService.Delete<tbFile>(deletedLambda);
-    //     notAddedToGTTLYet.RemoveAll(p => p.uid == record.uid);
-    //     await grd.Refresh();
-    // }
-    
-
-    // <!-- #Function for TẢI LÊN button -->
-    // protected async Task ChangeUpload(List<FileUpload> uploads)
-    // {
-    //     listUpload = uploads;
-    //     List<string> listUploaded = listUpload.Select(item => item.uid).ToList();
-    //     if (uploads == null || !uploads.Any())
-    //     {
-    //         return;
-    //     }
-    //     foreach (string uid in listUploaded)
-    //     {
-    //         if (String.IsNullOrEmpty(lamda) && (uid != ""))
-    //             lamda = "uid.Contains(\"" + uid + "\")";
-    //         else
-    //         {
-    //             if (uid != "")
-    //                 lamda = lamda + "|| uid.Contains(\"" + uid + "\")";
-    //         }
-    //     }
-    //     Đường dẫn đến API
-    //     List<tbFile> existingFiles = (await apiService.GetAll<tbFile>()).Where(f => listUploaded.Contains(f.uid))
-    //     .ToList();
-    //     foreach (var upload in uploads)
-    //     {
-    //         var existingFile = existingFiles.FirstOrDefault(f => f.uid == upload.uid);
-
-    //         if (existingFile != null)
-    //         {
-    //             existingFile.filename = upload.fileName;
-    //             existingFile.bucket = upload.bucketName;
-    //             existingFile.hash = upload.hash;
-    //             existingFile.pageCount = upload.pageCount ?? 0;
-    //             existingFile.loaiFile = upload.loaiFile ?? "";
-    //             existingFile.fileContent = upload.fileContent ?? "";
-
-    //             await apiService.Update<tbFile>(existingFile);
-    //         }
-    //         else
-    //         {
-    //             string uniqueUid = upload.uid;
-    //             List<string> existingUid = (await apiService.GetAll<tbFile>())
-    //             .Select(u => u.uid)
-    //             .ToList();
-
-
-    //             Kiểm tra xem uid đã tồn tại hay chưa (phòng khi upload.uid bị trùng)
-    //             if (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid))
-    //             {
-    //                 Tạo uid mới nếu bị trùng
-    //                 do
-    //                 {
-    //                     uniqueUid = Guid.NewGuid().ToString();
-    //                 }
-    //                 while (existingFiles.Any(f => f.uid == uniqueUid) || existingUid.Contains(uniqueUid));
-    //             }
-
-    //             var newFile = new tbFile
-    //                 {
-    //                     uid = uniqueUid,
-    //                     filename = upload.fileName,
-    //                     bucket = upload.bucketName,
-    //                     hash = upload.hash,
-    //                     pageCount = upload.pageCount ?? 0,
-    //                     loaiFile = upload.loaiFile ?? "",
-    //                     fileContent = upload.fileContent ?? ""
-    //                 };
-    //             await apiService.Create<tbFile>(newFile);
-    //             notAddedToGTTLYet.Add(upload); Add để xác định xem file nào mới
-    //         }
-
-    //     }
-    //     await grd.ForceRefresh();
-    // }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Model phụ cho các dropdown option
+  
 }
-

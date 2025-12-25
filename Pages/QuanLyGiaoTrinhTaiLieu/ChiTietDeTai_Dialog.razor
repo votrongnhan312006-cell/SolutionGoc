@@ -1,12 +1,13 @@
 ﻿@using Radzen
 @using Radzen.Blazor
-@using QLCongViec.Models
+@using api.Models.QLBienSoan
 @inject DialogService DialogService
+@inject ApiServices apiService
 
 <RadzenCard Style="padding:20px;max-height:80vh;overflow:auto">
 
     <h4 style="font-weight:600;margin-bottom:16px">
-        @Model.TenTaiLieu
+        @Model.TenGTTL
     </h4>
 
     <RadzenTabs>
@@ -14,38 +15,41 @@
 
             <!-- TAB 1: TỔNG QUAN -->
             <RadzenTabsItem Text="Tổng quan">
-                <Info label="Loại hình">@Model.LoaiHinh</Info>
-                <Info label="Chủ biên">@Model.ChuBien</Info>
-                <Info label="Môn học">@Model.MonHoc</Info>
-                <Info label="Trình độ">@Model.TrinhDo</Info>
-                <Info label="Đơn vị">@Model.DonVi</Info>
+                <RadzenCard Style="margin-bottom:10px;padding:16px;background:#f9f9f9">
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Mã tài liệu</div><div class="col-8">@Model.MaTaiLieu</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Tên đề tài</div><div class="col-8">@Model.TenGTTL</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Chủ biên</div><div class="col-8">@Model.ChuBien</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Thành viên</div><div class="col-8">@Model.ThanhVien</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Môn học</div><div class="col-8">@Model.IdMonHoc</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Số tín chỉ</div><div class="col-8">@Model.SoTinChi</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Đơn vị chủ trì</div><div class="col-8">@Model.IdDonVi</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Ngày giao nhiệm vụ</div><div class="col-8">@Model.NgayGiaoNV?.ToString("dd/MM/yyyy")</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Hạn hoàn thành</div><div class="col-8">@Model.HanHoanThanh?.ToString("dd/MM/yyyy")</div></div>
+                    <div class="row mb-2"><div class="col-4 font-weight-bold">Trạng thái</div><div class="col-8">@Model.IdTinhTrang</div></div>
+                    <div class="row"><div class="col-4 font-weight-bold">Ghi chú</div><div class="col-8">@Model.GhiChu</div></div>
+                </RadzenCard>
             </RadzenTabsItem>
 
             <!-- TAB 2: TIẾN ĐỘ -->
             <RadzenTabsItem Text="Tiến độ">
-                <RadzenTimeline>
-                    <RadzenTimelineItem Text="Gửi đề tài" />
-                    <RadzenTimelineItem Text="Đang biên soạn" />
-                    <RadzenTimelineItem Text="Hoàn thành" />
-                </RadzenTimeline>
+                <RadzenCard Style="padding:16px;background:#f9f9f9">
+                    <h5 style="font-weight:600;margin-bottom:12px">Cập nhật tiến độ công việc</h5>
+
+                    <RadzenDataList Data="@lstTienDo" Render="@RenderTienDoItem" Style="margin-bottom:20px" />
+                </RadzenCard>
             </RadzenTabsItem>
 
             <!-- TAB 3: TÀI LIỆU -->
             <RadzenTabsItem Text="Tài liệu">
-                <RadzenCard Style="margin-bottom:10px">
-                    <b>Đề cương</b>
-                    <RadzenButton Icon="download"
-                                  Text="Tải"
-                                  Size="ButtonSize.Small"
-                                  ButtonStyle="ButtonStyle.Light" />
-                </RadzenCard>
-
-                <RadzenCard>
-                    <b>Bản thảo</b>
-                    <RadzenButton Icon="download"
-                                  Text="Tải"
-                                  Size="ButtonSize.Small"
-                                  ButtonStyle="ButtonStyle.Light" />
+                <RadzenCard Style="padding:16px;background:#f9f9f9">
+                    <h5 style="font-weight:600;margin-bottom:12px">Tải lên tài liệu</h5>
+                    <RadzenUpload Accept=".pdf,.doc,.docx"
+                                  Multiple="true"
+                                  Url="@GetUploadUrl(Model.IdGTTL)"
+                                  Progress="@OnUploadProgress"
+                                  Complete="@OnUploadComplete"
+                                  Style="margin-bottom:20px"
+                                  ChooseText="Nhấn để tải lên bản thảo hoặc báo cáo" />
                 </RadzenCard>
             </RadzenTabsItem>
 
@@ -58,6 +62,56 @@
                   Click="@(() => DialogService.Close())" />
 </RadzenCard>
 
+
+@inject ApiServices apiService
 @code {
-    [Parameter] public DeXuatModel Model { get; set; } = default!;
+    [Parameter] public tbGTTL Model { get; set; }
+    private List<tbGTTL> lstGTTL = new();
+    private List<tbTienDo> lstTienDo = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        lstTienDo = await apiService.GetAll<tbTienDo>();
+    }
+
+    RenderFragment<tbTienDo> RenderTienDoItem => item => @<div style="margin-bottom:16px;border-bottom:1px solid #ddd;padding-bottom:8px">
+        <div><b>@item.tenTienDo</b></div>
+        <div>Ngày dự kiến: @(item.ngayDuKien?.ToString("dd/MM/yyyy") ?? "dd/mm/yyyy")</div>
+        <div>Ngày hoàn thành thực tế: @(item.ngayHoanThanhThucTe?.ToString("dd/MM/yyyy") ?? "dd/mm/yyyy")</div>
+        <div>Trạng thái: <span style="color:@GetTrangThaiColor(item.idTrangThai)">@item.idTrangThai</span></div>
+    </div>;
+
+    private string GetTrangThaiColor(int? trangThai) => trangThai switch
+    {
+        0 => "blue",
+        1 => "orange",
+        2 => "red",
+        3 => "gray",
+        4 => "green"
+    };
+
+    // =========================
+    // TÀI LIỆU (UPLOAD)
+    // =========================
+    private string GetUploadUrl(int idGttl) => $"api/upload/gttl/{idGttl}";
+
+    void OnUploadProgress(UploadProgressArgs args)
+    {
+        // Có thể hiển thị tiến trình nếu cần
+    }
+
+    void OnUploadComplete(UploadCompleteEventArgs args)
+    {
+        // Sau khi upload xong có thể gọi API để lưu thông tin file
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile(string? filePath)
+    {
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            // Ví dụ: gọi API để lấy dữ liệu
+            lstGTTL = await apiService.GetAll<tbGTTL>();
+        }
+    }
 }

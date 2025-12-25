@@ -6,69 +6,64 @@ namespace api.Models.QLBienSoan
     [ApiEndpoint("api/gttl", ApiEndpoints.GiaoTrinh)]
     public partial class tbGTTL
     {
-        public int idGTTL { get; set; }
+        public int IdGTTL { get; set; }
 
-        public string? maTaiLieu { get; set; }
+        public string? TenGTTL { get; set; } = null!;
 
-        public string tenGTTL { get; set; } = null!;
+        public int IdNhomLoaiGTTL { get; set; }
 
-        public int idNhomLoaiGTTL { get; set; }
+        public int? IdNhomGTTL { get; set; }
 
-        public int? idNhomGTTL { get; set; }
+        public int? IdBacHocSuDungGTTL { get; set; }
 
-        public int? idBacHocSuDungGTTL { get; set; }
+        public int? IdMonHoc { get; set; }
 
-        public short? idMonHoc { get; set; }
+        public int? SoTinChi { get; set; }
 
-        public string? chuBien { get; set; }
+        public int? IdDonVi { get; set; }
 
-        public string? thanhVien { get; set; }
+        public string? SqdGiaoNV { get; set; }
 
-        public int? soTinChi { get; set; }
+        public DateOnly? NgayGiaoNV { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-        //chưa có api lưu data đơn vị
-        public int? idDonVi { get; set; }
+        public DateOnly? HanHoanThanh { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-        public int? idTienDo { get; set; }
+        public string? SqdThamDinh { get; set; }
 
-        public int? idketQuaThamDinh { get; set; }
+        public DateOnly? NgayThamDinh { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-        public int? idDuToan { get; set; }
+        public string? SqdBanHanh { get; set; }
 
-        public int? idKeHoach { get; set; }
+        public DateOnly? NgayBanHanh { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-        public int? idThongTinBanHanh { get; set; }
+        public int? SoTrangA4 { get; set; }
 
-        public string? sQDGiaoNV { get; set; }
+        public int? SoBanIn { get; set; }
 
-        public DateOnly? ngayGuiDeXuat { get; set; }
+        public string? GhiChu { get; set; }
 
-        public DateOnly? ngayGiaoNV { get; set; }
+        public int? IdTinhTrang { get; set; } = 0;
+        public string? FileBanThao { get; set; }
+        public string? FileDeCuongChiTiet { get; set; }
 
-        public DateOnly? hanHoanThanh { get; set; }
+        public string? MaTaiLieu { get; set; }
 
-        public string? sqdThamDinh { get; set; }
+        public string? ChuBien { get; set; }
 
-        public DateOnly? ngayThamDinh { get; set; }
+        public string? ThanhVien { get; set; }
 
-        public string? sqdBanHanh { get; set; }
+        public int? IdTienDo { get; set; }
 
-        public DateOnly? ngayBanHanh { get; set; }
+        public int? IdketQuaThamDinh { get; set; }
 
-        public int? soTrangA4 { get; set; }
+        public int? IdDuToan { get; set; } = 0;
 
-        public int? soBanIn { get; set; }
+        public int? IdKeHoach { get; set; }
 
-        public string? ghiChu { get; set; }
+        public int? IdThongTinBanHanh { get; set; }
 
-        public byte idTinhTrang { get; set; }
+        public string? FileDangKy { get; set; }
 
-        public string? fileDangKy { get; set; }
-
-        public string? fileBanThao { get; set; }
-
-        public string? fileDeCuongChiTiet { get; set; }
-        
-        public string? fileDaTailen { get; set; }
+        public string? FileDaTailen { get; set; }
     }
 }

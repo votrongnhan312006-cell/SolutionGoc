@@ -8,28 +8,31 @@
 <RadzenCard Style="margin: 20px; padding: 0px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
     <div style="padding: 15px 20px; border-bottom: 1px solid #eee; background-color: #fcfcfc;">
         <h5 style="margin: 0; font-weight: bold; color: #2c3e50;">Duyệt kế hoạch biên soạn & Dự toán</h5>
-        <small class="text-muted">Thẩm định kế hoạch và dự toán từ chủ biên</small>
+        <small class="text-muted">Thẩm định kế hoạch và dự to án từ chủ biên</small>
     </div>
 
     <div class="row g-0">
         <div class="col-md-4" style="border-right: 1px solid #eee; background-color: #fafafa; min-height: 75vh;">
-            <RadzenListBox TValue="tbKeHoach" Data="@lstKeHoach" @bind-Value="selectedKeHoach"
+            <RadzenListBox TValue="tbGTTL" Data="@lstGTTL" @bind-Value="selectedGTTL"
                            Style="width: 100%; height: 100%; border: none; background: transparent;">
+                
                 <Template Context="item">
                     <div style="padding: 10px 5px;">
                         <div class="d-flex justify-content-between align-items-start">
-                            <strong style="color: #115599; font-size: 14px;">@item.ngayBatDau?.ToString("dd/MM/yyyy")</strong>
+                            <strong style="color: #115599; font-size: 14px;">@item.NgayGiaoNV?.ToString("dd/MM/yyyy")</strong>
                             <span style="font-size: 10px; background: #fff8e1; color: #fbc02d; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffe082;">Chờ thẩm định</span>
                         </div>
+
                         <div style="font-size: 12px; margin-top: 4px;">
                             <div class="fw-bold text-dark">Kế hoạch biên soạn</div>
-                            <div class="text-muted">@item.idKeHoachBienSoan</div>
+                            <div class="text-muted">@item.IdKeHoach</div>
                             <div class="text-muted mt-1">
-                                Bắt đầu: @item.ngayBatDau?.ToString("dd/MM/yyyy") | Kết thúc: @item.ngayDuKienHoanThanh?.ToString("dd/MM/yyyy")
+                                Bắt đầu: @item.NgayGiaoNV?.ToString("dd/MM/yyyy") | Kết thúc: @item.HanHoanThanh?.ToString("dd/MM/yyyy")
                             </div>
                         </div>
                     </div>
                 </Template>
+
             </RadzenListBox>
         </div>
 
@@ -44,20 +47,20 @@
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <label class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Ngày bắt đầu</label>
-                                        <div class="fw-bold">@selectedKeHoach.ngayBatDau?.ToString("dd/MM/yyyy")</div>
+                                        <div class="fw-bold">@selectedKeHoach.NgayBatDau?.ToString("dd/MM/yyyy")</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Ngày kết thúc</label>
-                                        <div class="fw-bold">@selectedKeHoach.ngayDuKienHoanThanh?.ToString("dd/MM/yyyy")</div>
+                                        <div class="fw-bold">@selectedKeHoach.NgayDuKienHoanThanh?.ToString("dd/MM/yyyy")</div>
                                     </div>
                                 </div>
 
                                 <h6 style="font-weight: bold; color: #555;">File đề cương chi tiết</h6>
                                 <div class="mt-4 p-3" style="border: 1px dashed #ddd; border-radius: 8px; background: #fafafa;">
                                     <label class="text-muted d-block mb-1" style="font-size: 11px;">FILE ĐỀ CƯƠNG CHI TIẾT</label>
-                                    @if (!string.IsNullOrEmpty(selectedKeHoach.fileDeCuongChiTiet))
+                                    @if (!string.IsNullOrEmpty(selectedKeHoach.FileDeCuongChiTiet))
                                     {
-                                        <RadzenLink Path="#" Text="@selectedKeHoach.fileDeCuongChiTiet" Icon="picture_as_pdf" Style="font-weight: 500;" />
+                                        <RadzenLink Path="#" Text="@selectedKeHoach.FileDeCuongChiTiet" Icon="picture_as_pdf" Style="font-weight: 500;" />
                                     }
                                     else
                                     {
@@ -100,7 +103,7 @@
 
                 <div style="margin-top: 30px; border-top: 2px solid #f5f5f5; padding-top: 20px;">
                     <label class="fw-bold mb-2" style="font-size: 13px;">Nhận xét QLKH</label>
-                    <RadzenTextArea @bind-Value="selectedKeHoach.nhanXet"
+                    <RadzenTextArea @bind-Value="selectedKeHoach.NhanXet"
                                     Placeholder="Nhập nội dung góp ý hoặc lý do từ chối..."
                                     Style="width: 100%; height: 80px;" />
 
@@ -116,18 +119,20 @@
     </div>
 </RadzenCard>
 
+@inject ApiServices apiService
 @code {
     private List<tbKeHoach>? lstKeHoach = new();
     private List<tbDuToan>? lstDuToan = new();
+    private List<tbGTTL> lstGTTL = new ();
+    private tbGTTL selectedGTTL = new();
     private tbKeHoach? selectedKeHoach;
     private tbDuToan? selectedDuToan;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-        // TODO: Gọi API để load dữ liệu
-        // await LoadKeHoachList();
-        // await LoadDuToanList();
+        lstGTTL = await apiService.GetAll<tbGTTL>();
+        // lstKeHoach = await apiService.GetAll<tbKeHoach>();
+        lstDuToan = await apiService.GetAll<tbDuToan>();
     }
 
     private void OnSelectionChanged(tbKeHoach keHoach)
@@ -150,13 +155,13 @@
     {
         if (selectedKeHoach == null) return;
         // TODO: Cập nhật trạng thái và lưu nhận xét
-        Console.WriteLine($"Yêu cầu chỉnh sửa: {selectedKeHoach.nhanXet}");
+        Console.WriteLine($"Yêu cầu chỉnh sửa: {selectedKeHoach.NhanXet}");
     }
 
     private async Task OnDuyetKeHoach()
     {
         if (selectedKeHoach == null) return;
         // TODO: Duyệt kế hoạch và lưu vào database
-        Console.WriteLine($"Duyệt kế hoạch: {selectedKeHoach.idKeHoachBienSoan}");
+        Console.WriteLine($"Duyệt kế hoạch: {selectedKeHoach.IdKeHoachBienSoan}");
     }
 }

@@ -1,6 +1,10 @@
 ﻿@page "/NopKeHoachDuToan"
 @using Radzen
 @using Radzen.Blazor
+@using api.Models.QLBienSoan
+@inject ApiServices apiService
+@inject NotificationService notificationService
+
 
 <style>
     /* Tùy chỉnh để Tabs rõ ràng hơn */
@@ -20,8 +24,7 @@
         <RadzenText TextStyle="TextStyle.H5" Weight="FontWeight.Bold" Class="rz-m-0">Nộp kế hoạch & dự toán</RadzenText>
         <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-text-secondary-color)">Giáo trình Lập trình nâng cao</RadzenText>
     </RadzenStack>
-
-    @* Sửa RenderMode sang Manual hoặc giữ Client nhưng đảm bảo cấu trúc thẻ *@
+    
     <RadzenTabs RenderMode="TabRenderMode.Client" Style="width:100%">
         <Tabs>
             <RadzenTabsItem Text="Kế hoạch biên soạn">
@@ -32,12 +35,12 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <RadzenLabel Text="Ngày bắt đầu *" Style="display:block" Class="rz-mb-1" />
-                            <RadzenDatePicker @bind-Value="NgayBatDau" Style="width:100%" DateFormat="dd/MM/yyyy" />
+                            <RadzenDatePicker @bind-Value="keHoach.NgayBatDau" Style="width:100%" DateFormat="dd/MM/yyyy" />
                         </div>
 
                         <div class="col-md-6">
                             <RadzenLabel Text="Ngày dự kiến hoàn thành *" Style="display:block" Class="rz-mb-1" />
-                            <RadzenDatePicker @bind-Value="NgayHoanThanh" Style="width:100%" DateFormat="dd/MM/yyyy" />
+                            <RadzenDatePicker @bind-Value="keHoach.NgayDuKienHoanThanh" Style="width:100%" DateFormat="dd/MM/yyyy" />
                         </div>
                     </div>
 
@@ -48,14 +51,16 @@
                         <RadzenButton Icon="add" Text="Thêm mốc" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Click="ThemMoc" />
                     </RadzenStack>
 
-                    @foreach (var moc in MocCongViecs)
+                    @foreach (var moc in lstMocCongViec)
                     {
+                        //Cần thêm hàm seq để tạo id cho từng Mốc công việc
+                        moc.idKeHoach = keHoach.IdKeHoachBienSoan;
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-7">
-                                <RadzenTextBox @bind-Value="moc.Ten" Placeholder="Tên mốc công việc (ví dụ: Nộp bản thảo...)" Style="width:100%" />
+                                <RadzenTextBox @bind-Value="moc.tenMocCongViec" Placeholder="Tên mốc công việc (ví dụ: Nộp bản thảo...)" Style="width:100%" />
                             </div>
                             <div class="col-md-4">
-                                <RadzenDatePicker @bind-Value="moc.Ngay" Style="width:100%" DateFormat="dd/MM/yyyy" Placeholder="Ngày hết hạn" />
+                                <RadzenDatePicker @bind-Value="moc.ngayDuKien" Style="width:100%" DateFormat="dd/MM/yyyy" Placeholder="Ngày hết hạn" />
                             </div>
                             <div class="col-md-1 text-end">
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Medium" Click="@(() => XoaMoc(moc))" />
@@ -78,29 +83,29 @@
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <RadzenLabel Text="Thù lao viết" Class="rz-mb-1" Style="display:block" />
-                            <RadzenNumeric TValue="decimal" @bind-Value="ThuLaoViet" Style="width:100%" Format="c0" />
+                            <RadzenNumeric TValue="long?" @bind-Value="duToan.thuLaoViet" Style="width:100%" Format="c0" />
                         </div>
 
                         <div class="col-md-6 mb-4">
                             <RadzenLabel Text="Chi phí hội thảo" Class="rz-mb-1" Style="display:block" />
-                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiHoiThao" Style="width:100%" Format="c0" />
+                            <RadzenNumeric TValue="long?" @bind-Value="duToan.chiPhiHoiThao" Style="width:100%" Format="c0" />
                         </div>
 
                         <div class="col-md-6 mb-4">
                             <RadzenLabel Text="Chi phí thẩm định" Class="rz-mb-1" Style="display:block" />
-                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiThamDinh" Style="width:100%" Format="c0" />
+                            <RadzenNumeric TValue="long?" @bind-Value="duToan.chiPhiThamDinh" Style="width:100%" Format="c0" />
                         </div>
 
                         <div class="col-md-6 mb-4">
                             <RadzenLabel Text="Chi phí in ấn" Class="rz-mb-1" Style="display:block" />
-                            <RadzenNumeric TValue="decimal" @bind-Value="ChiPhiInAn" Style="width:100%" Format="c0" />
+                            <RadzenNumeric TValue="long?" @bind-Value="duToan.chiPhiInAn" Style="width:100%" Format="c0" />
                         </div>
                     </div>
 
                     <RadzenAlert Severity="AlertSeverity.Success" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false" Class="rz-mt-2">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                             <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">Tổng kinh phí dự kiến:</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-m-0">@TongTien.ToString("N0") VND</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-m-0">@TongTien VND</RadzenText>
                         </RadzenStack>
                     </RadzenAlert>
 
@@ -114,37 +119,43 @@
     </RadzenTabs>
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Class="rz-mt-8">
-        <RadzenButton Text="Lưu nháp" Icon="save" ButtonStyle="ButtonStyle.Light" Style="min-width: 140px" />
-        <RadzenButton Text="Gửi kế hoạch" Icon="send" ButtonStyle="ButtonStyle.Primary" Style="min-width: 140px" />
+        <RadzenButton Text="Gửi kế hoạch" Icon="send" Click="Submit" ButtonStyle="ButtonStyle.Primary" Style="min-width: 140px" />
     </RadzenStack>
 
 </RadzenCard>
 
-@code {
-    DateTime? NgayBatDau = DateTime.Now;
-    DateTime? NgayHoanThanh = DateTime.Now.AddMonths(6);
 
-    public class MocCongViec
+@code {
+    private tbGTTL giaoTrinhTaiLieu = new();
+    private tbKeHoach keHoach = new();
+    private tbDuToan duToan = new();
+    private List<tbCacMocCongViec> lstMocCongViec = new();
+
+    //Khởi tạo ban đầu có 1 công việc
+    protected override async Task OnInitializedAsync()
     {
-        public string Ten { get; set; } = "";
-        public DateTime? Ngay { get; set; }
+        lstMocCongViec.Add(new());
     }
 
-    List<MocCongViec> MocCongViecs = new()
+    void ThemMoc() => lstMocCongViec.Add(new()); 
+    void XoaMoc(tbCacMocCongViec moc) => lstMocCongViec.Remove(moc);
+
+    protected async Task Submit()
     {
-        new() { Ten = "Hoàn thành đề cương chi tiết", Ngay = DateTime.Now.AddDays(15) },
-        new() { Ten = "Nộp bản thảo lần 1", Ngay = DateTime.Now.AddMonths(2) },
-        new() { Ten = "Tổ chức hội thảo", Ngay = DateTime.Now.AddMonths(4) },
-        new() { Ten = "Nộp bản thảo cuối", Ngay = DateTime.Now.AddMonths(6) }
-    };
+        foreach(var m in lstMocCongViec)
+        {
+            m.idKeHoach = await client.numServices.GetInt<tbCacMocCongViec>("seq_tbCacMocCongViec");
+            await apiService.Create<tbCacMocCongViec>(m);
+        }
+        keHoach.IdKeHoachBienSoan = await client.numServices.GetInt<tbKeHoach>("seq_tbKeHoach");
+        duToan.idDuToan = await client.numServices.GetInt<tbDuToan>("seq_tbDuToan");
+        await apiService.Create<tbKeHoach>(keHoach);
+        await apiService.Create<tbDuToan>(duToan);
 
-    void ThemMoc() => MocCongViecs.Add(new());
-    void XoaMoc(MocCongViec moc) => MocCongViecs.Remove(moc);
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(keHoach));
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(duToan));
+        notificationService.Notify(NotificationSeverity.Info, "Debug", "Đã vào Submit()");
+    }
 
-    decimal ThuLaoViet;
-    decimal ChiPhiHoiThao;
-    decimal ChiPhiThamDinh;
-    decimal ChiPhiInAn;
-
-    decimal TongTien => ThuLaoViet + ChiPhiHoiThao + ChiPhiThamDinh + ChiPhiInAn;
+    long? TongTien => duToan.thuLaoViet + duToan.chiPhiHoiThao + duToan.chiPhiThamDinh + duToan.chiPhiInAn;
 }

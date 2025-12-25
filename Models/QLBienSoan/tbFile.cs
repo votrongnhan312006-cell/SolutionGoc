@@ -1,6 +1,6 @@
 ﻿using IDC.Frontend.Services.Abstraction;
 
-namespace QLBienSoan.Models;
+namespace api.Models.QLBienSoan;
 
 [ApiEndpoint("api/file", ApiEndpoints.GiaoTrinh)]
 public partial class tbFile : IFileModel

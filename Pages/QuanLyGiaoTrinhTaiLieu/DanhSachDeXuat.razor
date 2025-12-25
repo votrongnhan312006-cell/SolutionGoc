@@ -4,90 +4,112 @@
 @using api.Models.QLBienSoan
 @inject DialogService DialogService
 
+
+
+
 <RadzenCard Style="padding:20px">
 
     <h4 style="font-weight:600">Danh sách đề xuất của đơn vị</h4>
     <p style="color:#6c757d">
         Theo dõi trạng thái các đề xuất biên soạn đã gửi
     </p>
-
     <RadzenDataGrid Data="@lstGTTL"
                     TItem="tbGTTL"
                     AllowPaging="true"
                     PageSize="5"
                     ShowPagingSummary="false">
 
-        <Columns>
+         <Columns> 
 
             <!-- STT -->
             <RadzenDataGridColumn Title="STT" Width="60px">
-                <Template Context="item">
-                    @(lstGTTL.IndexOf(item) + 1)
+                <Template Context="ctx">
+                    @(lstGTTL.IndexOf(ctx) + 1)
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- TÊN TÀI LIỆU -->
             <RadzenDataGridColumn Title="Tên tài liệu">
-                <Template Context="item">
-                    <a href="javascript:void(0)"
-                       style="color:#0d6efd;font-weight:500;cursor:pointer"
-                       @onclick="() => MoChiTietDeTai(item)">
-                        @item.tenGTTL
-                    </a>
-
-                    @if (!string.IsNullOrEmpty(item.ghiChu))
+                <Template Context="ctx">
+                        @ctx.TenGTTL
+                    @if (!string.IsNullOrEmpty(ctx.GhiChu))
                     {
                         <div style="font-size:12px;color:#6c757d">
-                            @item.ghiChu
+                            @ctx.GhiChu
                         </div>
                     }
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- LOẠI HÌNH -->
-            <RadzenDataGridColumn Property="idNhomLoaiGTTL" Title="Loại hình" />
-
-            <!-- CHỦ BIÊN -->
-            <RadzenDataGridColumn Property="chuBien" Title="Chủ biên" />
-
-            <!-- NGÀY GỬI -->
-            <RadzenDataGridColumn Title="Ngày gửi">
-                <Template Context="item">
-                    @(item.ngayGuiDeXuat.HasValue
-                                        ? item.ngayGuiDeXuat.Value.ToString("dd/MM/yyyy")
-                                        : "")
+            <RadzenDataGridColumn Title="Loại hình" >
+                <Template Context="ctx">
+                    @lstLoaiHinh?.FirstOrDefault(x => x.IdNhomLoaiGTTL == ctx.IdNhomLoaiGTTL)?.LoaiGTTL
                 </Template>
             </RadzenDataGridColumn>
+
+            <!-- CHỦ BIÊN -->
+            <RadzenDataGridColumn Property="ChuBien" Title="Chủ biên" />
+
+            <!-- NGÀY GỬI -->
+             <RadzenDataGridColumn Title="Bậc học sử dụng">
+                <Template Context="ctx">
+                    @lstBacHoc?.FirstOrDefault(x => x.IdBacHocSuDungGTTL == ctx.IdBacHocSuDungGTTL)?.BacHocSuDungGTTL
+                </Template>
+            </RadzenDataGridColumn> 
 
             <!-- TRẠNG THÁI -->
             <RadzenDataGridColumn Title="Trạng thái">
                 <Template Context="item">
-                    @TrangThaiBadge(item.idTinhTrang)
+                    @TrangThaiBadge(Convert.ToByte(item.IdTinhTrang))
+
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- THAO TÁC -->
-            <RadzenDataGridColumn Title="Thao tác" Width="90px">
+            <RadzenDataGridColumn Title="Thao tác" Width="190px">
                 <Template Context="item">
-                    <a href="javascript:void(0)"
-                       style="color:#0d6efd;font-weight:500;cursor:pointer"
-                       @onclick="() => MoChiTiet(item)">
-                        Chi tiết
-                    </a>
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.End"
+                                 Gap="1rem">
+
+                        <RadzenButton Text="Chi tiết đề tài"
+                                      Icon="send"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Style="min-width:90px"
+                                      Click="@(args => MoChiTietDeTai(item))" />
+
+                        <RadzenButton Text="Xét duyệt"
+                                      Icon="send"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Style="min-width:90px"
+                                      Click="@(args => MoChiTiet(item))" />
+                    </RadzenStack>
                 </Template>
             </RadzenDataGridColumn>
 
-        </Columns>
-    </RadzenDataGrid>
 
+         </Columns> 
+    </RadzenDataGrid>
 </RadzenCard>
 
+@inject ApiServices apiService
 @code {
 
-    // ====== DATA ======
     private List<tbGTTL> lstGTTL = new();
     private tbGTTL? selectedItem;
-    // ====== POPUP CHI TIẾT ĐỀ TÀI ======
+
+    //Lấy data từ các danh mục
+    private List<tbNhomLoaiGTTL> lstLoaiHinh = new();
+    private List<tbBacHocSuDungGTTL> lstBacHoc = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        lstGTTL = await apiService.GetAll<tbGTTL>();
+        lstLoaiHinh = await apiService.GetAll<tbNhomLoaiGTTL>();
+        lstBacHoc = await apiService.GetAll<tbBacHocSuDungGTTL>();
+    }
+
     async Task MoChiTietDeTai(tbGTTL item)
     {
         await DialogService.OpenAsync<ChiTietDeTai_Dialog>(
@@ -111,7 +133,7 @@
             "",
             new Dictionary<string, object>
             {
-                { "Model", item }
+                { "SelectedGTTL", item }
             },
             new DialogOptions
             {

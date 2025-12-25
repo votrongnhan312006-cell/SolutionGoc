@@ -1,85 +1,111 @@
-﻿@page "/chi-tiet-de-xuat"
-@using Radzen
+﻿@using Radzen
 @using Radzen.Blazor
+@using QLCongViec.Models.SangKienCaiTien
+@inject DialogService DialogService
 
-<RadzenCard Style="padding: 0; border: none; box-shadow: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    @* Tiêu đề *@
-    <div style="padding: 20px 24px; border-bottom: 1px solid #f0f0f0;">
-        <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H2" Style="font-weight: bold; margin: 0; color: #111827;">
-            Chi tiết đề xuất
+<RadzenCard Style="padding:0;border:none;box-shadow:none;
+                  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+
+    <!-- TIÊU ĐỀ -->
+    <div style="padding:20px 24px;border-bottom:1px solid #f0f0f0;">
+        <RadzenText TextStyle="TextStyle.H6"
+                    TagName="TagName.H2"
+                    Style="font-weight:600;margin:0;color:#111827">
+            Chi tiết sáng kiến cải tiến
         </RadzenText>
     </div>
 
-    @* Nội dung hiển thị *@
-    <div style="padding: 24px; max-height: 60vh; overflow-y: auto;">
-        
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Trạng thái</RadzenText>
-            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Style="padding: 6px 12px; font-weight: 500; background-color: #ecfdf5; color: #10b981; border: 1px solid #d1fae5;">
-                <RadzenIcon Icon="check_circle" Style="font-size: 14px; vertical-align: middle; margin-right: 4px;" />
-                @duLieu.TrangThai
-            </RadzenBadge>
+    <!-- NỘI DUNG -->
+    <div style="padding:24px;max-height:60vh;overflow-y:auto;">
+
+        <!-- TRẠNG THÁI -->
+        <div style="margin-bottom:20px;">
+            <RadzenText TextStyle="TextStyle.Caption"
+                        Style="color:#6b7280;margin-bottom:4px;display:block">
+                Trạng thái
+            </RadzenText>
+
+            @TrangThaiBadge(Model?.idTrangThai)
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Số quyết định</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.SoQuyetDinh</RadzenText>
-        </div>
+        <!-- TÊN SÁNG KIẾN -->
+        <ThongTin label="Tên sáng kiến"
+                  value="@Model?.tenSangKienCaiTien" />
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Tên tài liệu</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.TenTaiLieu</RadzenText>
-        </div>
+        <!-- TÁC GIẢ -->
+        <ThongTin label="Tác giả"
+                  value="@Model?.tenTacGia" />
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Loại hình biên soạn</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.LoaiHinhBienSoan</RadzenText>
-        </div>
+        <!-- ĐỒNG TÁC GIẢ -->
+        <ThongTin label="Đồng tác giả"
+                  value="@Model?.tenDongTacGia" />
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Môn học áp dụng</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.MonHocApDung</RadzenText>
-        </div>
+        <!-- CẤP BẬC -->
+        <ThongTin label="Cấp bậc tác giả"
+                  value="@Model?.capBacTacGia" />
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Trình độ</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.TrinhDo</RadzenText>
-        </div>
+        <!-- NĂM HỌC -->
+        <ThongTin label="Năm học"
+                  value="@Model?.namHoc" />
+<!-- NGÀY THỰC HIỆN -->
+<ThongTin label="Ngày thực hiện"
+          value="@NgayThucHienText" />
 
-        <div style="margin-bottom: 20px;">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: #6b7280; display: block; margin-bottom: 4px;">Đơn vị đề xuất</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500; color: #1f2937;">@duLieu.DonViDeXuat</RadzenText>
-        </div>
+<!-- ĐỊA ĐIỂM -->
+<ThongTin label="Địa điểm thực hiện"
+          value="@Model?.diaDiemThucHien" />
+
+        <!-- PHẠM VI -->
+        <ThongTin label="Phạm vi thực hiện"
+                  value="@Model?.phamViThucHien" />
+
+        <!-- MÔ TẢ -->
+        <ThongTin label="Mô tả"
+                  value="@Model?.moTa" />
+
+        <!-- KẾT QUẢ -->
+        <ThongTin label="Kết quả"
+                  value="@Model?.ketQua" />
 
     </div>
 
-    @* Nút hành động *@
-    <div style="padding: 16px 24px; background-color: #ffffff; border-top: 1px solid #f0f0f0;">
-        <RadzenButton Click="@DongCuaSo" 
-                      Text="Đóng" 
-                      Style="width: 100%; background-color: #374151; color: white; border-radius: 6px; height: 40px; text-transform: none; font-weight: 500;" />
+    <!-- FOOTER -->
+    <div style="padding:16px 24px;border-top:1px solid #f0f0f0;">
+        <RadzenButton Text="Đóng"
+                      Click="() => DialogService.Close()"
+                      Style="width:100%;
+                             background:#374151;
+                             color:white;
+                             border-radius:6px;
+                             height:40px;
+                             font-weight:500;" />
     </div>
+
 </RadzenCard>
 
 @code {
-    [Inject] 
-    protected DialogService DichVuHoiThoai { get; set; }
 
-    // Khởi tạo đối tượng dữ liệu tiếng Việt
-    private ThongTinDeXuat duLieu = new ThongTinDeXuat();
+    [Parameter]
+    public long Id { get; set; }
+    public tbSangKienCaiTien? Model { get; set; }
 
-    private void DongCuaSo()
+    string? NgayThucHienText =>
+       Model?.ngayThucHien?.ToString("dd/MM/yyyy");
+    RenderFragment TrangThaiBadge(int? trangThai) => builder =>
     {
-        DichVuHoiThoai.Close();
-    }
-    public class ThongTinDeXuat
-{
-    public string TrangThai { get; set; } = "Được phê duyệt";
-    public string SoQuyetDinh { get; set; } = "123/QĐ-ĐHBK";
-    public string TenTaiLieu { get; set; } = "Giáo trình Lập trình Web nâng cao";
-    public string LoaiHinhBienSoan { get; set; } = "Giáo trình mới";
-    public string MonHocApDung { get; set; } = "IT301 - Lập trình Web";
-    public string TrinhDo { get; set; } = "Đại học";
-    public string DonViDeXuat { get; set; } = "Khoa Công nghệ Thông tin";
-}
+        var (text, bg, color) = trangThai switch
+        {
+            1 => ("Đã phê duyệt", "#ecfdf5", "#10b981"),
+            0 => ("Chờ xét duyệt", "#fff7ed", "#f59e0b"),
+            _ => ("Không phê duyệt", "#fef2f2", "#ef4444")
+        };
+
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "style",
+            $"padding:6px 12px;border-radius:999px;" +
+            $"background:{bg};color:{color};font-weight:500");
+        builder.AddContent(2, text);
+        builder.CloseElement();
+    };
+
 }

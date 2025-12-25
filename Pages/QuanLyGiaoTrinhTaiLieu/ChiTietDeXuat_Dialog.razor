@@ -1,61 +1,60 @@
 ﻿@using Radzen
-@using QLCongViec.Models
+@using Radzen.Blazor
+@using api.Models.QLBienSoan
+
 @inject DialogService DialogService
+<RadzenStack Gap="1.2rem" Class="rz-p-2">
+ <RadzenStack Gap="0">
+        <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-mb-0">Nhập kết quả thẩm định</RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">@SelectedGTTL?.TenGTTL</RadzenText>
+    </RadzenStack>
 
-<RadzenCard Style="padding:20px;max-height:80vh;overflow:auto">
+    <hr class="rz-m-0" />
 
-    <h4 style="font-weight:600;margin-bottom:16px">
-        Chi tiết đề xuất
-    </h4>
+    @* <div>
+        <RadzenLabel Text="Kết luận" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenRadioButtonList @bind-Value="@SelectedGTTL.k" TValue="string" Orientation="Orientation.Vertical" Class="rz-w-100">
+            <Items>
+                <RadzenRadioButtonListItem Text="Đạt" Value="Đạt" />
+                <RadzenRadioButtonListItem Text="Cần chỉnh sửa" Value="Cần chỉnh sửa" />
+                <RadzenRadioButtonListItem Text="Không đạt" Value="Không đạt" />
+            </Items>
+        </RadzenRadioButtonList>
+    </div> *@
 
-    @Field("Trạng thái", TrangThaiBadge(Model.TrangThai))
-    @Field("Số quyết định", @<span>@Model.SoQuyetDinh</span>)
-    @Field("Tên tài liệu", @<span>@Model.TenTaiLieu</span>)
-    @Field("Loại hình biên soạn", @<span>@Model.LoaiHinh</span>)
-    @Field("Chủ biên", @<span>@Model.ChuBien</span>)
-    @Field("Môn học áp dụng", @<span>@Model.MonHoc</span>)
-    @Field("Trình độ", @<span>@Model.TrinhDo</span>)
-    @Field("Đơn vị đề xuất", @<span>@Model.DonVi</span>)
+    <div>
+        <RadzenLabel Text="Ngày giao nhiệm vụ" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenDatePicker @bind-Value="@SelectedGTTL.NgayGiaoNV" Style="width: 100%;" DateFormat="dd/MM/yyyy" Placeholder="dd/mm/yyyy" />
+    </div>
 
-    <RadzenButton Text="Đóng"
-                  Style="width:100%;margin-top:20px"
-                  ButtonStyle="ButtonStyle.Dark"
-                  Click="@(() => DialogService.Close())" />
-</RadzenCard>
+    <div>
+        <RadzenLabel Text="Số quyết định giao nhiệm vụ" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" @bind-Value="@SelectedGTTL.SqdGiaoNV" Style="width: 100%;" />
+    </div>
 
+    <div>
+        <RadzenLabel Text="File quyết định *" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenUpload Url="upload/single" Class="custom-upload-box" Multiple="false">
+            <ChildContent>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-p-4">
+                    <RadzenIcon Icon="cloud_upload" Style="font-size: 30px; color: #aaa;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">Tải lên biên bản thẩm định</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline">PDF, DOC, DOCX (tối đa 10MB)</RadzenText>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenUpload>
+    </div>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="10px" Class="rz-mt-4">
+        <RadzenButton Text="Hủy" Click="(() => DialogService.Close())" ButtonStyle="ButtonStyle.Light" Style="min-width: 80px;" />
+        <RadzenButton Text="Lưu kết quả" Click="Submit" ButtonStyle="ButtonStyle.Primary" Style="min-width: 120px;" />
+    </RadzenStack>
+</RadzenStack>
 @code {
-    [Parameter] public DeXuatModel Model { get; set; } = default!;
+    [Parameter] public tbGTTL? SelectedGTTL { get; set; }
 
-    RenderFragment Field(string label, RenderFragment content) => builder =>
+    protected async void Submit()
     {
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "style", "margin-bottom:12px");
-
-        builder.OpenElement(2, "div");
-        builder.AddAttribute(3, "style", "color:#6c757d;font-size:13px");
-        builder.AddContent(4, label);
-        builder.CloseElement();
-
-        builder.OpenElement(5, "div");
-        builder.AddContent(6, content);
-        builder.CloseElement();
-
-        builder.CloseElement();
-    };
-
-    RenderFragment TrangThaiBadge(TrangThaiDeXuat t) => builder =>
-    {
-        var (text, color) = t switch
-        {
-            TrangThaiDeXuat.DaPheDuyet => ("Được phê duyệt", "#d1f7dc"),
-            TrangThaiDeXuat.ChoXetDuyet => ("Chờ xét duyệt", "#fff3cd"),
-            _ => ("Không phê duyệt", "#f8d7da")
-        };
-
-        builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "style",
-            $"padding:6px 12px;border-radius:16px;background:{color}");
-        builder.AddContent(2, text);
-        builder.CloseElement();
-    };
+        DialogService.Close(true);
+    }
 }

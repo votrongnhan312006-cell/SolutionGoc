@@ -16,18 +16,18 @@
                     @foreach (var item in lstGTTL)
                     {
                         <div class="list-group-item list-group-item-action @(selectedItem == item ? "active-item" : "")"
-                             @onclick="() => SelectItem(item)" style="cursor: pointer; border-left: 5px solid @(item.tenGTTL == "Chờ ban hành" ? "#ffc107" : "green"); margin-bottom: 5px;">
+                             @onclick="() => SelectItem(item)" style="cursor: pointer; border-left: 5px solid @(item.TenGTTL == "Chờ ban hành" ? "#ffc107" : "green"); margin-bottom: 5px;">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">@item.tenGTTL</h6>
+                                <h6 class="mb-1">@item.TenGTTL</h6>
 
 
-                                @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@item.idTinhTrang" /> *@
+                                @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@item.IdTinhTrang" /> *@
                             
                             
                             </div>
-                            <small>@item.chuBien</small><br />
-                            <small class="text-muted">@item.idDonVi</small><br />
-                            <small>Thẩm định: @item.ngayThamDinh?.ToString("dd/MM/yyyy")</small>
+                            <small>@item.ChuBien</small><br />
+                            <small class="text-muted">@item.IdDonVi</small><br />
+                            <small>Thẩm định: @item.NgayThamDinh?.ToString("dd/MM/yyyy")</small>
                         </div>
                     }
                 </div>
@@ -43,10 +43,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <RadzenText TextStyle="TextStyle.Subtitle2">Mã tài liệu</RadzenText>
-                            <p><b>@selectedItem.maTaiLieu</b></p>
+                            <p><b>@selectedItem.MaTaiLieu</b></p>
 
                             <RadzenText TextStyle="TextStyle.Subtitle2">Tên tài liệu</RadzenText>
-                            <p>@selectedItem.tenGTTL</p>
+                            <p>@selectedItem.TenGTTL</p>
 
 
                             @* <RadzenText TextStyle="TextStyle.Subtitle2">Đơn vị</RadzenText>
@@ -58,14 +58,14 @@
                             <RadzenText TextStyle="TextStyle.Subtitle2">Trạng thái</RadzenText>
 
 
-                            @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@selectedItem.idTinhTrang" /> *@
+                            @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@selectedItem.IdTinhTrang" /> *@
 
 
                             <RadzenText TextStyle="TextStyle.Subtitle2" Class="mt-3">Chủ biên</RadzenText>
-                            <p>@selectedItem.chuBien</p>
+                            <p>@selectedItem.ChuBien</p>
 
                             <RadzenText TextStyle="TextStyle.Subtitle2">Ngày thẩm định</RadzenText>
-                            <p>@selectedItem.ngayThamDinh?.ToString("dd/MM/yyyy")</p>
+                            <p>@selectedItem.NgayThamDinh?.ToString("dd/MM/yyyy")</p>
                         </div>
                     </div>
 
@@ -99,9 +99,15 @@
     }
 </style>
 
+@inject ApiServices apiService
 @code {
     private List<tbGTTL>? lstGTTL = new();
     private tbGTTL? selectedItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lstGTTL = await apiService.GetAll<tbGTTL>();
+    }
 
     void SelectItem(tbGTTL item)
     {
@@ -112,7 +118,7 @@
     {
         var result = await DialogService.OpenAsync<NhapThongTinBanHanhTaiLieu_Dialog>(
             $"Nhập thông tin ban hành",
-            new Dictionary<string, object>() { { "TaiLieuId", selectedItem.idGTTL }, { "TenTaiLieu", selectedItem.tenGTTL } },
+            new Dictionary<string, object>() { { "TaiLieuId", selectedItem.IdGTTL }, { "TenTaiLieu", selectedItem.TenGTTL } },
             new DialogOptions() { Width = "700px", Height = "auto" });
 
         if (result is bool ok && ok)

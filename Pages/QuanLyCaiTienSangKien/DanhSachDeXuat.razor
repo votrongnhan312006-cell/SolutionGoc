@@ -1,6 +1,8 @@
 ﻿@page "/DanhSachDeXuatSkct"
+@using QLCongViec.Models.SangKienCaiTien
 @using Radzen
 @using Radzen.Blazor
+
 
 <!--==================== PHẦN HTML/MARKUP ====================-->
 
@@ -8,77 +10,56 @@
     <h3>Danh sách đề xuất của đơn vị</h3>
     <p style="color:#6c757d;margin-bottom:20px">Theo dõi trạng thái các đề xuất biên soạn đã gửi</p>
 
-    <RadzenDataGrid Data="@dsDeXuat"
-                    TItem="DeXuatDto"
+    <RadzenDataGrid Data="@lstSangKienCaiTien"
+                    TItem="tbSangKienCaiTien"
                     AllowPaging="true"
                     PageSize="10"
                     AllowSorting="true"
-                    AllowFiltering="true">
+                    AllowFiltering="false">
 
         <Columns>
 
             <!-- STT -->
             <RadzenDataGridColumn Title="Số thứ tự" Width="80px" TextAlign="TextAlign.Center">
-                <Template Context="item">
-                    @(dsDeXuat.IndexOf(item) + 1)
+                <Template Context="ctx">
+                    @(lstSangKienCaiTien.IndexOf(ctx) + 1)
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- Tên sáng kiến -->
-            <RadzenDataGridColumn TItem="DeXuatDto"
-                                  Property="TenSangKienCaiTien"
+            <RadzenDataGridColumn TItem="tbSangKienCaiTien"
+                                  Property="tenSangKienCaiTien"
                                   Title="Tên sáng kiến cải tiến"
-                                  Width="300px">
-                <Template Context="item">
-                    <div>
-                        @if (item.CoThongBao)
-                        {
-                            <RadzenIcon Icon="error" Style="color:#dc3545;margin-right:8px" />
-                        }
-                        <strong>@item.TenSangKienCaiTien</strong>
-                    </div>
-                    @if (!string.IsNullOrEmpty(item.MoTaGoc))
-                    {
-                        <small style="color:#6c757d;display:block;margin-top:4px">@item.MoTaGoc</small>
-                    }
-                </Template>
-            </RadzenDataGridColumn>
-
-            <!-- Loại sáng kiến -->
-            <RadzenDataGridColumn TItem="DeXuatDto"
-                                  Property="LoaiSangKienCaiTien"
-                                  Title="Loại sáng kiến cải tiến"
-                                  Width="180px" />
+                                  Width="300px"/>
 
             <!-- Tác giả -->
-            <RadzenDataGridColumn TItem="DeXuatDto"
-                                  Property="TacGia"
+            <RadzenDataGridColumn TItem="tbSangKienCaiTien"
+                                  Property="tenTacGia"
                                   Title="Tác giả"
                                   Width="180px" />
 
             <!-- Ngày gửi -->
-            <RadzenDataGridColumn Title="Ngày gửi" Width="120px" TextAlign="TextAlign.Center">
-                <Template Context="item">
-                    @item.NgayGui.ToString("dd/MM/yyyy")
-                </Template>
-            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="tbSangKienCaiTien"
+                                  Property="ngayThucHien"
+                                  Title="Ngày thực hiện"
+                                  Width="180px" />
 
             <!-- Trạng thái -->
             <RadzenDataGridColumn Title="Trạng thái" Width="180px" TextAlign="TextAlign.Center">
-                <Template Context="item">
-                    @if (item.TrangThai == 1)
+                <Template Context="ctx">
+                    @if (ctx.idTrangThai == 1)
                     {
                         <RadzenBadge Text="Được phê duyệt"
                                      BadgeStyle="BadgeStyle.Success"
                                      Style="padding:8px 12px" />
                     }
-                    else if (item.TrangThai == 0)
+                    if (ctx.idTrangThai == 2)
                     {
                         <RadzenBadge Text="Chờ xét duyệt"
                                      BadgeStyle="BadgeStyle.Warning"
                                      Style="padding:8px 12px" />
                     }
-                    else
+                    if (ctx.idTrangThai == 3)
                     {
                         <RadzenBadge Text="Không phê duyệt"
                                      BadgeStyle="BadgeStyle.Danger"
@@ -89,23 +70,15 @@
 
             <!-- Thao tác -->
             <RadzenDataGridColumn Title="Thao tác" Width="160px" TextAlign="TextAlign.Center">
-                <Template Context="item">
+                <Template Context="ctx">
                     <div style="display:flex;gap:5px;justify-content:center">
                         <!-- Nút Xem chi tiết -->
                         <RadzenButton Icon="visibility"
                                       Size="ButtonSize.Small"
                                       ButtonStyle="ButtonStyle.Info"
                                       Variant="Variant.Outlined"
-                                      Click="@(() => XemChiTiet(item.SoThuTu))"
+                                      Click="@(() => XemChiTiet(ctx.idSangKienCaiTien))"
                                       title="Chi tiết" />
-
-                        <!-- Nút Cập nhật -->
-                        <RadzenButton Icon="edit"
-                                      Size="ButtonSize.Small"
-                                      ButtonStyle="ButtonStyle.Success"
-                                      Variant="Variant.Outlined"
-                                      Click="@(() => CapNhat(item.SoThuTu))"
-                                      title="Cập nhật" />
 
                     </div>
                 </Template>
@@ -116,83 +89,32 @@
 </RadzenCard>
 
 
+@inject ApiServices apiService
+@inject Radzen.DialogService DialogService
 
 @code {
+    private List<tbSangKienCaiTien>? lstSangKienCaiTien;
 
-    //---------- MODEL CLASS ----------
 
-    class DeXuatDto
+    protected override async Task OnInitializedAsync()
     {
-        public int SoThuTu { get; set; }
-        public string TenSangKienCaiTien { get; set; } = string.Empty;
-        public string MoTaGoc { get; set; } = string.Empty;
-        public string LoaiSangKienCaiTien { get; set; } = string.Empty;
-        public string TacGia { get; set; } = string.Empty;
-        public DateTime NgayGui { get; set; }
-        public int TrangThai { get; set; }
-        // 0: Chờ xét duyệt | 1: Được phê duyệt | 2: Không phê duyệt
-        public bool CoThongBao { get; set; }
+        lstSangKienCaiTien = await apiService.GetAll<tbSangKienCaiTien>();
     }
 
-    //---------- PROPERTIES ----------
-
-    List<DeXuatDto> dsDeXuat = new();
-
-    //---------- LIFECYCLE METHODS ----------
-
-    protected override void OnInitialized()
+    private async Task XemChiTiet(long id)
     {
-        // Khởi tạo dữ liệu
-        dsDeXuat = new List<DeXuatDto>
-        {
-            new DeXuatDto
+        await DialogService.OpenAsync<ChiTietDeXuat_Dialog>(
+            "Chi tiết",
+            new Dictionary<string, object> { ["Id"] = id },
+            new Radzen.DialogOptions
             {
-                SoThuTu = 1,
-                TenSangKienCaiTien = "Giáo trình Lập trình Web nâng cao",
-                LoaiSangKienCaiTien = "Giáo trình mới",
-                TacGia = "TS. Nguyễn Văn A",
-                NgayGui = new DateTime(2025, 1, 15),
-                TrangThai = 1,
-                CoThongBao = false
-            },
-            new DeXuatDto
-            {
-                SoThuTu = 2,
-                TenSangKienCaiTien = "Tài liệu thực hành Cơ sở dữ liệu",
-                LoaiSangKienCaiTien = "Tài liệu dạy học mới",
-                TacGia = "PGS.TS. Phạm Thị D",
-                NgayGui = new DateTime(2025, 2, 1),
-                TrangThai = 0,
-                CoThongBao = false
-            },
-            new DeXuatDto
-            {
-                SoThuTu = 3,
-                TenSangKienCaiTien = "Giáo trình Trí tuệ nhân tạo",
-                MoTaGoc = "Gốc: Giáo trình Trí tuệ nhân tạo - Phiên bản 2020",
-                LoaiSangKienCaiTien = "Chỉnh lý giáo trình",
-                TacGia = "GS.TS. Võ Văn F",
-                NgayGui = new DateTime(2025, 1, 20),
-                TrangThai = 2,
-                CoThongBao = true
+                Width = "800px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true
             }
-        };
-    }
-
-    //---------- EVENT HANDLERS ----------
-
-    void XemChiTiet(int soThuTu)
-    {
-        // Xử lý logic xem chi tiết
-        Console.WriteLine($"Xem chi tiết đề xuất số: {soThuTu}");
-        // NavigationManager.NavigateTo($"/de-xuat/chi-tiet/{soThuTu}");
-    }
-
-    void CapNhat(int soThuTu)
-    {
-        // Xử lý logic cập nhật
-        Console.WriteLine($"Cập nhật đề xuất số: {soThuTu}");
-        // NavigationManager.NavigateTo($"/de-xuat/cap-nhat/{soThuTu}");
+        );
     }
 
 }

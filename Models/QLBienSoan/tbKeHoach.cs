@@ -6,12 +6,12 @@ namespace api.Models.QLBienSoan
     [ApiEndpoint("api/kehoach", ApiEndpoints.GiaoTrinh)]
     public class tbKeHoach
     {
-        public int idKeHoachBienSoan { get; set; }
-        public DateOnly? ngayBatDau { get; set; }
-        public DateOnly? ngayDuKienHoanThanh { get; set; }
-        public string? idCacMocCongViec { get; set; }
-        public string? fileDeCuongChiTiet { get; set; }
-        public string? nhanXet { get; set; }
+        public int IdKeHoachBienSoan { get; set; }
+        public DateOnly? NgayBatDau { get; set; }
+        public DateOnly? NgayDuKienHoanThanh { get; set; }
+        public int? IdCacMocCongViec { get; set; }
+        public string? FileDeCuongChiTiet { get; set; }
+        public string? NhanXet { get; set; }
     }
 
 

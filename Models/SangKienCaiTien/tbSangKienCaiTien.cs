@@ -2,6 +2,7 @@
 
 namespace QLCongViec.Models.SangKienCaiTien
 {
+    [ApiEndpoint("api/sangkiencaitien", ApiEndpoints.CanBo)]
     public class tbSangKienCaiTien
     {
         public int idSangKienCaiTien { get; set; }
