@@ -1,111 +1,362 @@
 ﻿@using Radzen
 @using Radzen.Blazor
 @using QLCongViec.Models.SangKienCaiTien
+
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 
-<RadzenCard Style="padding:0;border:none;box-shadow:none;
-                  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+<style>
+    /* ===== META ===== */
+    .skct-meta-bar {
+        display: flex;
+        gap: 12px;
+        margin: 12px 0 20px;
+    }
 
-    <!-- TIÊU ĐỀ -->
-    <div style="padding:20px 24px;border-bottom:1px solid #f0f0f0;">
-        <RadzenText TextStyle="TextStyle.H6"
-                    TagName="TagName.H2"
-                    Style="font-weight:600;margin:0;color:#111827">
-            Chi tiết sáng kiến cải tiến
-        </RadzenText>
-    </div>
+    .skct-meta-item {
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        font-size: 13px;
+        color: #334155;
+    }
 
-    <!-- NỘI DUNG -->
-    <div style="padding:24px;max-height:60vh;overflow-y:auto;">
+        .skct-meta-item.success {
+            background: #eafaf1;
+            color: #15803d;
+            font-weight: 600;
+        }
 
-        <!-- TRẠNG THÁI -->
-        <div style="margin-bottom:20px;">
-            <RadzenText TextStyle="TextStyle.Caption"
-                        Style="color:#6b7280;margin-bottom:4px;display:block">
-                Trạng thái
-            </RadzenText>
+/* ===== DIALOG WRAPPER ===== */
+.skct-dialog {
+    padding: 8px 4px;
+}
 
-            @TrangThaiBadge(Model?.idTrangThai)
+/* ===== HEADER ===== */
+    .skct-header-title {
+        font-size: 24px; /* tăng nhẹ */
+        font-weight: 800; /* đậm hơn */
+        letter-spacing: -0.3px;
+    }
+
+    .skct-header-sub {
+        font-size: 14px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+/* ===== INFO CARD ===== */
+    .skct-info-card input,
+    .skct-info-card textarea {
+        border-radius: 10px;
+    }
+
+        .skct-info-card input:focus,
+        .skct-info-card textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,.15);
+        }
+.skct-info-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 22px 26px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 12px 30px rgba(0,0,0,.08);
+    border-left: 5px solid #4f46e5; /* xanh tím nhạt */
+}
+
+/* ===== GRID ===== */
+.skct-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 28px;
+}
+
+.skct-grid .full {
+    grid-column: span 2;
+}
+
+/* ===== LABEL + VALUE ===== */
+.skct-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.skct-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: #0f172a;
+}
+
+.skct-muted {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* ===== ACTIONS ===== */
+.skct-actions {
+    margin-top: 28px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* ===== BUTTON ===== */
+.btn-primary-pill {
+    border-radius: 999px !important;
+    padding: 10px 22px;
+    font-weight: 600;
+}
+
+.btn-light-pill {
+    border-radius: 999px !important;
+    color: #475569 !important;
+    padding: 10px 18px;
+    font-weight: 500;
+}
+
+</style>
+
+<RadzenStack Gap="1.4rem" Class="rz-p-4 skct-dialog">
+
+    <!-- HEADER -->
+    <div>
+        <div class="skct-header-title">Chi tiết sáng kiến</div>
+        <div class="skct-meta-bar">
+
+            @if (SelectedGTTL?.idTrangThai == 1)
+            {
+                <div class="skct-meta-item success">✓ Được phê duyệt</div>
+            }
+
+            <div class="skct-meta-item">
+                Cấp: <b>Học viện</b>
+            </div>
+
+            <div class="skct-meta-item">
+                Lĩnh vực: <b>CNTT</b>
+            </div>
+
         </div>
-
-        <!-- TÊN SÁNG KIẾN -->
-        <ThongTin label="Tên sáng kiến"
-                  value="@Model?.tenSangKienCaiTien" />
-
-        <!-- TÁC GIẢ -->
-        <ThongTin label="Tác giả"
-                  value="@Model?.tenTacGia" />
-
-        <!-- ĐỒNG TÁC GIẢ -->
-        <ThongTin label="Đồng tác giả"
-                  value="@Model?.tenDongTacGia" />
-
-        <!-- CẤP BẬC -->
-        <ThongTin label="Cấp bậc tác giả"
-                  value="@Model?.capBacTacGia" />
-
-        <!-- NĂM HỌC -->
-        <ThongTin label="Năm học"
-                  value="@Model?.namHoc" />
-<!-- NGÀY THỰC HIỆN -->
-<ThongTin label="Ngày thực hiện"
-          value="@NgayThucHienText" />
-
-<!-- ĐỊA ĐIỂM -->
-<ThongTin label="Địa điểm thực hiện"
-          value="@Model?.diaDiemThucHien" />
-
-        <!-- PHẠM VI -->
-        <ThongTin label="Phạm vi thực hiện"
-                  value="@Model?.phamViThucHien" />
-
-        <!-- MÔ TẢ -->
-        <ThongTin label="Mô tả"
-                  value="@Model?.moTa" />
-
-        <!-- KẾT QUẢ -->
-        <ThongTin label="Kết quả"
-                  value="@Model?.ketQua" />
-
+        <div class="skct-header-sub">
+            Thông tin chi tiết hồ sơ sáng kiến
+        </div>
     </div>
 
-    <!-- FOOTER -->
-    <div style="padding:16px 24px;border-top:1px solid #f0f0f0;">
-        <RadzenButton Text="Đóng"
-                      Click="() => DialogService.Close()"
-                      Style="width:100%;
-                             background:#374151;
-                             color:white;
-                             border-radius:6px;
-                             height:40px;
-                             font-weight:500;" />
+    <RadzenDivider />
+
+    <!-- CONTENT -->
+    <RadzenCard Class="skct-info-card">
+        <div class="skct-grid">
+
+            <!-- TÊN -->
+            <div class="full">
+                <label class="skct-label">Tên sáng kiến</label>
+                @if (!isEditMode)
+                {
+                    <div class="skct-value">
+                        @SelectedGTTL?.tenSangKienCaiTien
+                    </div>
+                }
+                else
+                {
+                    <RadzenTextBox @bind-Value="SelectedGTTL.tenSangKienCaiTien"
+                                   Style="width:100%" />
+                }
+            </div>
+
+            <!-- TÁC GIẢ -->
+            <div>
+                <label class="skct-label">Tác giả</label>
+                @if (!isEditMode)
+                {
+                    <div class="skct-value">
+                        @SelectedGTTL?.tenTacGia
+                        <span class="skct-muted"> (@SelectedGTTL?.capBacTacGia)</span>
+                    </div>
+                }
+                else
+                {
+                    <RadzenTextBox @bind-Value="SelectedGTTL.tenTacGia"
+                                   Style="width:100%" />
+                }
+            </div>
+
+            <!-- CẤP -->
+            <div>
+                <label class="skct-label">Cấp sáng kiến</label>
+                @if (!isEditMode)
+                {
+                    <div class="skct-value">
+                        @(SelectedGTTL?.idCap.HasValue == true ? $"Cấp {SelectedGTTL.idCap}" : "")
+                    </div>
+                }
+                else
+                {
+                    <RadzenNumeric @bind-Value="SelectedGTTL.idCap"
+                                   Style="width:120px" />
+                }
+            </div>
+
+            <!-- NGÀY -->
+            <div>
+                <label class="skct-label">Ngày thực hiện</label>
+                @if (!isEditMode)
+                {
+                    <div class="skct-value">
+                        @SelectedGTTL?.ngayThucHien?.ToString("dd/MM/yyyy")
+                    </div>
+                }
+                else
+                {
+                    <RadzenDatePicker @bind-Value="ngayThucHienTemp"
+                                      DateFormat="dd/MM/yyyy"
+                                      Style="width:160px" />
+                }
+            </div>
+
+            <!-- MÔ TẢ -->
+            <div class="full">
+                <label class="skct-label">Mô tả</label>
+                @if (!isEditMode)
+                {
+                    <div class="skct-value">
+                        @SelectedGTTL?.moTa
+                    </div>
+                }
+                else
+                {
+                    <RadzenTextArea @bind-Value="SelectedGTTL.moTa"
+                                    Rows="3"
+                                    Style="width:100%" />
+                }
+            </div>
+
+        </div>
+    </RadzenCard>
+
+    <!-- ACTIONS -->
+    <div class="skct-actions">
+        @if (!isEditMode)
+        {
+            <RadzenButton Icon="edit"
+                          Text="Chỉnh sửa"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Class="btn-primary-pill"
+                          Click="BatDauChinhSua" />
+
+        }
+        else
+        {
+            <RadzenButton Icon="save"
+                          Text="Cập nhật"
+                          ButtonStyle="ButtonStyle.Success"
+                          Class="btn-primary-pill"
+                          Click="CapNhat" />
+
+            <RadzenButton Icon="close"
+                          Text="Hủy"
+                          ButtonStyle="ButtonStyle.Light"
+                          Class="btn-light-pill"
+                          Click="HuyChinhSua" />
+        }
     </div>
 
-</RadzenCard>
+</RadzenStack>
 
 @code {
 
     [Parameter]
-    public long Id { get; set; }
-    public tbSangKienCaiTien? Model { get; set; }
+    public tbSangKienCaiTien? SelectedGTTL { get; set; }
 
-    string? NgayThucHienText =>
-       Model?.ngayThucHien?.ToString("dd/MM/yyyy");
-    RenderFragment TrangThaiBadge(int? trangThai) => builder =>
+    bool isEditMode = false;
+
+    // backup để HỦY
+    tbSangKienCaiTien? backup;
+
+    // DateOnly -> DateTime trung gian
+    DateTime? ngayThucHienTemp;
+
+    protected override void OnInitialized()
     {
-        var (text, bg, color) = trangThai switch
+        if (SelectedGTTL != null)
         {
-            1 => ("Đã phê duyệt", "#ecfdf5", "#10b981"),
-            0 => ("Chờ xét duyệt", "#fff7ed", "#f59e0b"),
-            _ => ("Không phê duyệt", "#fef2f2", "#ef4444")
-        };
+            backup = new tbSangKienCaiTien
+            {
+                tenSangKienCaiTien = SelectedGTTL.tenSangKienCaiTien,
+                tenTacGia = SelectedGTTL.tenTacGia,
+                capBacTacGia = SelectedGTTL.capBacTacGia,
+                idCap = SelectedGTTL.idCap,
+                moTa = SelectedGTTL.moTa,
+                ngayThucHien = SelectedGTTL.ngayThucHien
+            };
 
-        builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "style",
-            $"padding:6px 12px;border-radius:999px;" +
-            $"background:{bg};color:{color};font-weight:500");
-        builder.AddContent(2, text);
-        builder.CloseElement();
-    };
+            ngayThucHienTemp =
+                SelectedGTTL.ngayThucHien?.ToDateTime(TimeOnly.MinValue);
+        }
+    }
+
+    void BatDauChinhSua()
+    {
+        isEditMode = true;
+    }
+
+    void CapNhat()
+    {
+        // ===== VALIDATE BẮT BUỘC =====
+        if (SelectedGTTL == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(SelectedGTTL.tenSangKienCaiTien)
+            || string.IsNullOrWhiteSpace(SelectedGTTL.tenTacGia))
+        {
+            NotificationService.Notify(
+                NotificationSeverity.Warning,
+                "Thiếu thông tin",
+                "Tên sáng kiến và Tác giả không được để trống"
+            );
+            return; // ❗ DỪNG LUÔN, KHÔNG ĐÓNG DIALOG
+        }
+
+        // ===== CẬP NHẬT NGÀY =====
+        if (ngayThucHienTemp.HasValue)
+        {
+            SelectedGTTL.ngayThucHien =
+                DateOnly.FromDateTime(ngayThucHienTemp.Value);
+        }
+
+        // ===== THÔNG BÁO THÀNH CÔNG =====
+        NotificationService.Notify(
+            NotificationSeverity.Success,
+            "Thành công",
+            "Đã cập nhật thông tin sáng kiến"
+        );
+
+    }
+
+    async void HuyChinhSua()
+    {
+        bool? confirm = await DialogService.Confirm(
+            "Bạn có chắc muốn hủy các thay đổi?",
+            "Xác nhận",
+            new ConfirmOptions { OkButtonText = "Có", CancelButtonText = "Không" });
+
+        if (confirm != true) return;
+
+        if (SelectedGTTL != null && backup != null)
+        {
+            SelectedGTTL.tenSangKienCaiTien = backup.tenSangKienCaiTien;
+            SelectedGTTL.tenTacGia = backup.tenTacGia;
+            SelectedGTTL.capBacTacGia = backup.capBacTacGia;
+            SelectedGTTL.idCap = backup.idCap;
+            SelectedGTTL.moTa = backup.moTa;
+            SelectedGTTL.ngayThucHien = backup.ngayThucHien;
+        }
+
+        isEditMode = false;
+    }
 
 }

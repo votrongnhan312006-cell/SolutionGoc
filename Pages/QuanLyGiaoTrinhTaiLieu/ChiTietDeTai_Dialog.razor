@@ -1,8 +1,106 @@
-﻿@using Radzen
+﻿@using QLCongViec.Models.QLBienSoan
+@using Radzen
 @using Radzen.Blazor
 @using api.Models.QLBienSoan
 @inject DialogService DialogService
 @inject ApiServices apiService
+
+<style>
+
+    /* Card tiến độ */
+    .tiendo-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* Header */
+    .tiendo-header {
+        margin-bottom: 10px;
+    }
+
+    .tiendo-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+    }
+
+    /* Body */
+    .tiendo-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+    }
+
+    .tiendo-col .label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .tiendo-col .value {
+        font-weight: 500;
+    }
+
+    /* Trạng thái text */
+    .status-text {
+        font-weight: 600;
+    }
+
+    /* Màu theo trạng thái */
+    .tiendo-latedone {
+        background: #fff7ed;
+        border-color: #fdba74;
+    }
+
+    .tiendo-done {
+        background: #D8F3CD;
+        border-color: #08A045;
+    }
+
+    .tiendo-overdue {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .tiendo-pending {
+        background: #f9fafb;
+    }
+
+    /* Text màu */
+    .text-latedone {
+        color: #ea580c;
+    }
+
+    .text-done {
+        color: #08A045;
+    }
+
+    .text-overdue {
+        color: #dc2626;
+    }
+
+    .text-pending {
+        color: #6b7280;
+    }
+
+    /* Icon */
+    .icon-done {
+        color: #f97316;
+    }
+
+    .icon-overdue {
+        color: #dc2626;
+    }
+
+    .icon-pending {
+        color: #9ca3af;
+    }
+
+</style>
 
 <RadzenCard Style="padding:20px;max-height:80vh;overflow:auto">
 
@@ -33,24 +131,69 @@
             <!-- TAB 2: TIẾN ĐỘ -->
             <RadzenTabsItem Text="Tiến độ">
                 <RadzenCard Style="padding:16px;background:#f9f9f9">
-                    <h5 style="font-weight:600;margin-bottom:12px">Cập nhật tiến độ công việc</h5>
 
-                    <RadzenDataList Data="@lstTienDo" Render="@RenderTienDoItem" Style="margin-bottom:20px" />
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <h5 style="font-weight:600">Cập nhật tiến độ công việc</h5>
+                        @* <span style="color:#6c757d;font-size:14px">
+                            Hoàn thành: @($"{lstTienDo.Count(x => x.TrangThai == 3)}/{lstTienDo.Count}")
+                        </span> *@
+                    </div>
+
+                    @foreach (var item in lstTienDo)
+                    {
+                        <div class="tiendo-card @GetTienDoClass(item)">
+
+                            <!-- Hàng trên: Icon + Tên -->
+                            <div class="tiendo-header">
+                                <div class="tiendo-title">
+                                    <i class="@GetTienDoIcon(item)"></i>
+                                    <span>@item.tenTienDo</span>
+                                </div>
+                            </div>
+
+                            <!-- Hàng dưới: Thông tin -->
+                            <div class="tiendo-body">
+
+                                <div class="tiendo-col">
+                                    <div class="label">Ngày dự kiến</div>
+                                    <div class="value">@item.ngayDuKien?.ToString("dd/MM/yyyy")</div>
+                                </div>
+
+                                <div class="tiendo-col">
+                                    <div class="label">Ngày hoàn thành thực tế</div>
+                                    <RadzenDatePicker @bind-Value="item.ngayHoanThanhThucTe"
+                                                      DateFormat="dd/MM/yyyy"
+                                                      Style="width:160px" />
+                                </div>
+
+                                <div class="tiendo-col">
+                                    <div class="label">Trạng thái</div>
+                                    <div class="status-text @GetTrangThaiTextClass(item)">
+                                        @lstTrangThai?.FirstOrDefault(x => x.idTinhTrangDeTai == item.idTrangThai)?.tenTinhTrangDeTai
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+
                 </RadzenCard>
             </RadzenTabsItem>
 
+
             <!-- TAB 3: TÀI LIỆU -->
             <RadzenTabsItem Text="Tài liệu">
-                <RadzenCard Style="padding:16px;background:#f9f9f9">
-                    <h5 style="font-weight:600;margin-bottom:12px">Tải lên tài liệu</h5>
-                    <RadzenUpload Accept=".pdf,.doc,.docx"
-                                  Multiple="true"
-                                  Url="@GetUploadUrl(Model.IdGTTL)"
-                                  Progress="@OnUploadProgress"
-                                  Complete="@OnUploadComplete"
-                                  Style="margin-bottom:20px"
-                                  ChooseText="Nhấn để tải lên bản thảo hoặc báo cáo" />
-                </RadzenCard>
+                <!-- File -->
+                <div class="row" style="margin-bottom: 16px;">
+                    <div class="col-md-12">
+                        <RadzenLabel Text="File tải lên" Component="FileQD" Style="margin-bottom: 8px; display: block;" />
+                        <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 40px; text-align: center; background-color: #fafafa;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+                            <div style="color: #666; margin-bottom: 8px;">Tải lên file</div>
+                            <div style="color: #999; font-size: 12px;">PDF, DOC, DOCX (tối đa 10MB)</div>
+                        </div>
+                    </div>
+                </div>
             </RadzenTabsItem>
 
         </Tabs>
@@ -68,27 +211,14 @@
     [Parameter] public tbGTTL Model { get; set; }
     private List<tbGTTL> lstGTTL = new();
     private List<tbTienDo> lstTienDo = new();
-
+    private List<tbTrangThai> lstTrangThai = new();
     protected override async Task OnInitializedAsync()
     {
         lstTienDo = await apiService.GetAll<tbTienDo>();
+        lstTrangThai = await apiService.GetAll<tbTrangThai>();
     }
 
-    RenderFragment<tbTienDo> RenderTienDoItem => item => @<div style="margin-bottom:16px;border-bottom:1px solid #ddd;padding-bottom:8px">
-        <div><b>@item.tenTienDo</b></div>
-        <div>Ngày dự kiến: @(item.ngayDuKien?.ToString("dd/MM/yyyy") ?? "dd/mm/yyyy")</div>
-        <div>Ngày hoàn thành thực tế: @(item.ngayHoanThanhThucTe?.ToString("dd/MM/yyyy") ?? "dd/mm/yyyy")</div>
-        <div>Trạng thái: <span style="color:@GetTrangThaiColor(item.idTrangThai)">@item.idTrangThai</span></div>
-    </div>;
 
-    private string GetTrangThaiColor(int? trangThai) => trangThai switch
-    {
-        0 => "blue",
-        1 => "orange",
-        2 => "red",
-        3 => "gray",
-        4 => "green"
-    };
 
     // =========================
     // TÀI LIỆU (UPLOAD)
@@ -110,8 +240,69 @@
     {
         if (!string.IsNullOrEmpty(filePath))
         {
-            // Ví dụ: gọi API để lấy dữ liệu
+            // gọi API để lấy dữ liệu
             lstGTTL = await apiService.GetAll<tbGTTL>();
         }
     }
+
+    // string GetTrangThaiText(tbTienDo item)
+    // {
+    //     idTrangThai = 3 = Chưa hoàn thành
+    //     if (item.ngayDuKien > DateOnly.FromDateTime(DateTime.Today) && item.ngayHoanThanhThucTe == null)
+    //     {
+    //         item.idTrangThai = 3;
+    //         return "Chưa hoàn thành";
+    //     }
+    //     idTrangThai = 4 = Hoàn thành trễ
+    //     if (item.ngayHoanThanhThucTe > item.ngayDuKien)
+    //     {
+    //         item.idTrangThai = 4;
+    //         return "Hoàn thành trễ";
+    //     }
+    //     idTrangThai = 6 = Hoàn thành
+    //     if (item.ngayHoanThanhThucTe < item.ngayDuKien)
+    //     {
+    //         item.idTrangThai = 6;
+    //         return "Hoàn thành";
+    //     }
+    //     idTrangThai = 5 = Quá hạn
+    //     item.idTrangThai = 5;
+    //     return "Quá hạn";
+    // }
+
+    string GetTrangThaiTextClass(tbTienDo item)
+    {
+        //Hoàn thành trễ
+        if (item.idTrangThai == 4) return "text-latedone";
+        //Quá hạn
+        if (item.idTrangThai == 5) return "text-overdue";
+        //Hoàn thành
+        if (item.idTrangThai == 6) return "text-done";
+        //Chưa hoàn thành
+        return "text-pending";
+    }
+
+    string GetTienDoClass(tbTienDo item)
+    {
+        //Hoàn thành trễ
+        if (item.idTrangThai == 4) return "tiendo-latedone";
+        //Quá hạn
+        if (item.idTrangThai == 5) return "tiendo-overdue";
+        //Hoàn thành
+        if (item.idTrangThai == 6) return "tiendo-done";
+        //Chưa hoàn thành
+        return "tiendo-pending";
+    }
+
+    string GetTienDoIcon(tbTienDo item)
+    {
+        //Hoàn thành trễ
+        if (item.idTrangThai == 4) return "rz-icon rz-check-circle icon-done";
+        //Quá hạn
+        if (item.idTrangThai == 5) return "rz-icon rz-alert-circle icon-overdue";
+        //Chưa hoàn thành
+        return "rz-icon rz-clock icon-pending";
+    }
+
+
 }

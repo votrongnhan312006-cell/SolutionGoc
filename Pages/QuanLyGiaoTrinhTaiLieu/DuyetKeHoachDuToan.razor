@@ -1,167 +1,184 @@
 ﻿@page "/DuyetKeHoachDuToan"
 @using Radzen
 @using Radzen.Blazor
-@using QLCongViec.Models
 @using api.Models.QLBienSoan
-@inject DialogService DialogService
+@inject ApiServices apiService
 
-<RadzenCard Style="margin: 20px; padding: 0px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-    <div style="padding: 15px 20px; border-bottom: 1px solid #eee; background-color: #fcfcfc;">
-        <h5 style="margin: 0; font-weight: bold; color: #2c3e50;">Duyệt kế hoạch biên soạn & Dự toán</h5>
-        <small class="text-muted">Thẩm định kế hoạch và dự to án từ chủ biên</small>
+<RadzenCard Class="rz-m-4 rz-p-0">
+
+    <!-- HEADER -->
+    <div class="rz-p-4 border-bottom">
+        <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold">
+            Duyệt kế hoạch biên soạn & Dự toán
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">
+            Thẩm định kế hoạch và dự toán từ chủ biên
+        </RadzenText>
     </div>
 
-    <div class="row g-0">
-        <div class="col-md-4" style="border-right: 1px solid #eee; background-color: #fafafa; min-height: 75vh;">
-            <RadzenListBox TValue="tbGTTL" Data="@lstGTTL" @bind-Value="selectedGTTL"
-                           Style="width: 100%; height: 100%; border: none; background: transparent;">
-                
-                <Template Context="item">
-                    <div style="padding: 10px 5px;">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <strong style="color: #115599; font-size: 14px;">@item.NgayGiaoNV?.ToString("dd/MM/yyyy")</strong>
-                            <span style="font-size: 10px; background: #fff8e1; color: #fbc02d; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffe082;">Chờ thẩm định</span>
-                        </div>
+    <RadzenRow Class="rz-m-0">
 
-                        <div style="font-size: 12px; margin-top: 4px;">
-                            <div class="fw-bold text-dark">Kế hoạch biên soạn</div>
-                            <div class="text-muted">@item.IdKeHoach</div>
-                            <div class="text-muted mt-1">
-                                Bắt đầu: @item.NgayGiaoNV?.ToString("dd/MM/yyyy") | Kết thúc: @item.HanHoanThanh?.ToString("dd/MM/yyyy")
-                            </div>
-                        </div>
+        <!-- LEFT -->
+        <RadzenColumn Size="12" SizeMD="4" Class="rz-p-3 border-end" Style="background:#fafafa">
+            <RadzenStack Gap="12px">
+                @foreach (var item in lstGTTL)
+                {
+                    <div class="left-item @(selectedGTTL?.IdGTTL == item.IdGTTL ? "active" : "")"
+                         @onclick="() => OnSelect(item)">
+                        <RadzenText Weight="FontWeight.Bold">@item.TenGTTL</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">Chủ biên: @item.ChuBien</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption">Nộp: @item.NgayGiaoNV?.ToString("dd/MM/yyyy")</RadzenText>
+
+                        <RadzenBadge Text="Chờ thẩm định"
+                                     BadgeStyle="BadgeStyle.Warning"
+                                     IsPill="true"
+                                     Class="rz-mt-2" />
                     </div>
-                </Template>
+                }
+            </RadzenStack>
+        </RadzenColumn>
 
-            </RadzenListBox>
-        </div>
-
-        <div class="col-md-8" style="padding: 25px; background-color: #fff;">
-            @if (selectedKeHoach != null)
+        <!-- RIGHT -->
+        <RadzenColumn Size="12" SizeMD="8" Class="rz-p-4">
+            @if (selectedGTTL != null)
             {
-                <RadzenTabs TabPosition="TabPosition.Top" RenderMode="TabRenderMode.Client">
-                    <Tabs>
-                        <RadzenTabsItem Text="Kế hoạch" Icon="event">
-                            <div style="padding-top: 20px;">
-                                <h6 style="font-weight: bold; color: #555;">Thông tin kế hoạch</h6>
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <label class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Ngày bắt đầu</label>
-                                        <div class="fw-bold">@selectedKeHoach.NgayBatDau?.ToString("dd/MM/yyyy")</div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="text-muted d-block" style="font-size: 11px; text-transform: uppercase;">Ngày kết thúc</label>
-                                        <div class="fw-bold">@selectedKeHoach.NgayDuKienHoanThanh?.ToString("dd/MM/yyyy")</div>
-                                    </div>
-                                </div>
+                <RadzenTabs>
 
-                                <h6 style="font-weight: bold; color: #555;">File đề cương chi tiết</h6>
-                                <div class="mt-4 p-3" style="border: 1px dashed #ddd; border-radius: 8px; background: #fafafa;">
-                                    <label class="text-muted d-block mb-1" style="font-size: 11px;">FILE ĐỀ CƯƠNG CHI TIẾT</label>
-                                    @if (!string.IsNullOrEmpty(selectedKeHoach.FileDeCuongChiTiet))
-                                    {
-                                        <RadzenLink Path="#" Text="@selectedKeHoach.FileDeCuongChiTiet" Icon="picture_as_pdf" Style="font-weight: 500;" />
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Chưa có file</span>
-                                    }
-                                </div>
-                            </div>
-                        </RadzenTabsItem>
+                    <!-- TAB KẾ HOẠCH -->
+                    <RadzenTabsItem Text="Kế hoạch" Icon="event">
 
-                        <RadzenTabsItem Text="Dự toán" Icon="payments">
-                            <div style="padding-top: 20px;">
-                                <h6 style="font-weight: bold; color: #555; margin-bottom: 15px;">Chi tiết kinh phí</h6>
-                                <div class="p-3 border rounded">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Thù lao viết</span>
-                                        <strong>@selectedDuToan?.thuLaoViet?.ToString("N0") đ</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Chi phí hội thảo</span>
-                                        <strong>@selectedDuToan?.chiPhiHoiThao?.ToString("N0") đ</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Chi phí thẩm định</span>
-                                        <strong>@selectedDuToan?.chiPhiThamDinh?.ToString("N0") đ</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span>Chi phí in ấn</span>
-                                        <strong>@selectedDuToan?.chiPhiInAn?.ToString("N0") đ</strong>
-                                    </div>
-                                    <hr />
-                                    <div class="d-flex justify-content-between mt-2" style="color: #d32f2f; font-size: 18px; font-weight: bold;">
-                                        <span>TỔNG CỘNG</span>
-                                        <span>@TinhTongCong()?.ToString("N0") đ</span>
-                                    </div>
-                                </div>
+                        <RadzenText Weight="FontWeight.Bold" Class="rz-mb-3">
+                            Thông tin kế hoạch
+                        </RadzenText>
+
+                        <RadzenRow Class="rz-mb-4">
+                            <RadzenColumn Size="6">
+                                <RadzenText TextStyle="TextStyle.Caption">Ngày bắt đầu</RadzenText>
+                                <RadzenText Weight="FontWeight.Bold">
+                                    @selectedKeHoach?.NgayBatDau?.ToString("dd/MM/yyyy")
+                                </RadzenText>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="6">
+                                <RadzenText TextStyle="TextStyle.Caption">Ngày kết thúc</RadzenText>
+                                <RadzenText Weight="FontWeight.Bold">
+                                    @selectedKeHoach?.NgayDuKienHoanThanh?.ToString("dd/MM/yyyy")
+                                </RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenText Weight="FontWeight.Bold" Class="rz-mb-2">
+                            Các mốc thời gian
+                        </RadzenText>
+                        @foreach(var cv in lstCongViec)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-index">@(lstCongViec.IndexOf(cv)+1)</div>
+                                <div class="flex-grow-1">@cv?.tenMocCongViec</div>
+                                <small>@cv?.ngayDuKien</small>
                             </div>
-                        </RadzenTabsItem>
-                    </Tabs>
+                        }
+
+                        @* <div class="timeline-item">
+                            <div class="timeline-index">1</div>
+                            <div class="flex-grow-1">Hoàn thành đề cương chi tiết</div>
+                            <small>@selectedKeHoach?.HanDeCuong?.ToString("dd/MM/yyyy")</small>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-index">2</div>
+                            <div class="flex-grow-1">Hội thảo</div>
+                            <small>@selectedKeHoach?.HanHoiThao?.ToString("dd/MM/yyyy")</small>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-index">3</div>
+                            <div class="flex-grow-1">Hoàn thành bản thảo</div>
+                            <small>@selectedKeHoach?.ba?.ToString("dd/MM/yyyy")</small>
+                        </div> *@
+
+                        <RadzenText Weight="FontWeight.Bold" Class="rz-mt-4">
+                            File đề cương chi tiết
+                        </RadzenText>
+
+                        <div class="upload-box rz-mt-2">
+                            <RadzenLink Icon="description" Path="#">
+                                @selectedKeHoach?.FileDeCuongChiTiet
+                            </RadzenLink>
+                        </div>
+
+                        <RadzenText Weight="FontWeight.Bold" Class="rz-mt-4">
+                            Nhận xét QLKH
+                        </RadzenText>
+
+                        <RadzenTextArea @bind-Value="selectedKeHoach.NhanXet"
+                                        Style="width:100%"
+                                        Rows="3"
+                                        Placeholder="Nhập nhận xét kế hoạch..." />
+                    </RadzenTabsItem>
+
+                    <!-- TAB DỰ TOÁN -->
+                    <RadzenTabsItem Text="Dự toán" Icon="payments">
+                        <RadzenStack Gap="8px" Class="rz-mt-4">
+                            <RadzenText>Thù lao viết: <b>@selectedDuToan?.thuLaoViet?.ToString("N0") đ</b></RadzenText>
+                            <RadzenText>Chi phí hội thảo: <b>@selectedDuToan?.chiPhiHoiThao?.ToString("N0") đ</b></RadzenText>
+                            <RadzenText>Chi phí thẩm định: <b>@selectedDuToan?.chiPhiThamDinh?.ToString("N0") đ</b></RadzenText>
+                            <RadzenText>Chi phí in ấn: <b>@selectedDuToan?.chiPhiInAn?.ToString("N0") đ</b></RadzenText>
+
+                            <hr />
+                            <RadzenText Weight="FontWeight.Bold">
+                                Tổng cộng: @TinhTongCong(selectedDuToan)?.ToString("N0") đ
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenTabsItem>
+
                 </RadzenTabs>
 
-                <div style="margin-top: 30px; border-top: 2px solid #f5f5f5; padding-top: 20px;">
-                    <label class="fw-bold mb-2" style="font-size: 13px;">Nhận xét QLKH</label>
-                    <RadzenTextArea @bind-Value="selectedKeHoach.NhanXet"
-                                    Placeholder="Nhập nội dung góp ý hoặc lý do từ chối..."
-                                    Style="width: 100%; height: 80px;" />
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <RadzenButton Text="Yêu cầu chỉnh sửa" ButtonStyle="ButtonStyle.Light" Icon="history_edu"
-                                      Click="@(() => OnYeuCauChinhSua())" />
-                        <RadzenButton Text="Duyệt kế hoạch" ButtonStyle="ButtonStyle.Success" Icon="task_alt"
-                                      Click="@(() => OnDuyetKeHoach())" />
-                    </div>
-                </div>
+                <!-- ACTION -->
+                <RadzenStack Orientation="Orientation.Horizontal"
+                             JustifyContent="JustifyContent.End"
+                             Gap="12px"
+                             Class="rz-mt-4">
+                    <RadzenButton Text="Yêu cầu chỉnh sửa"
+                                  ButtonStyle="ButtonStyle.Light" />
+                    <RadzenButton Text="Hoàn tất thẩm định"
+                                  ButtonStyle="ButtonStyle.Success" />
+                </RadzenStack>
             }
-        </div>
-    </div>
+        </RadzenColumn>
+    </RadzenRow>
 </RadzenCard>
 
-@inject ApiServices apiService
 @code {
-    private List<tbKeHoach>? lstKeHoach = new();
-    private List<tbDuToan>? lstDuToan = new();
-    private List<tbGTTL> lstGTTL = new ();
-    private tbGTTL selectedGTTL = new();
+    private List<tbGTTL> lstGTTL = new();
+    private tbGTTL? selectedGTTL;
     private tbKeHoach? selectedKeHoach;
     private tbDuToan? selectedDuToan;
+    private List<tbCacMocCongViec>? lstCongViec;
 
     protected override async Task OnInitializedAsync()
     {
         lstGTTL = await apiService.GetAll<tbGTTL>();
-        // lstKeHoach = await apiService.GetAll<tbKeHoach>();
-        lstDuToan = await apiService.GetAll<tbDuToan>();
+        // lstCongViec = await apiService.GetAll<tbCacMocCongViec>();
     }
 
-    private void OnSelectionChanged(tbKeHoach keHoach)
+    async Task OnSelect(tbGTTL item)
     {
-        selectedKeHoach = keHoach;
-        // TODO: Load dự toán tương ứng với kế hoạch được chọn
-        // selectedDuToan = lstDuToan?.FirstOrDefault(x => x.idDuToan == keHoach.id);
+        selectedGTTL = item;
+
+        selectedKeHoach = (await apiService.GetAll<tbKeHoach>())
+            .FirstOrDefault(x => x.IdKeHoachBienSoan == item.IdGTTL);
+
+        selectedDuToan = (await apiService.GetAll<tbDuToan>())
+            .FirstOrDefault(x => x.idDuToan == item.IdGTTL);
     }
 
-    private long? TinhTongCong()
+    long? TinhTongCong(tbDuToan duToan)
     {
-        if (selectedDuToan == null) return 0;
-        return (selectedDuToan.thuLaoViet ?? 0) +
-               (selectedDuToan.chiPhiHoiThao ?? 0) +
-               (selectedDuToan.chiPhiThamDinh ?? 0) +
-               (selectedDuToan.chiPhiInAn ?? 0);
-    }
-
-    private async Task OnYeuCauChinhSua()
-    {
-        if (selectedKeHoach == null) return;
-        // TODO: Cập nhật trạng thái và lưu nhận xét
-        Console.WriteLine($"Yêu cầu chỉnh sửa: {selectedKeHoach.NhanXet}");
-    }
-
-    private async Task OnDuyetKeHoach()
-    {
-        if (selectedKeHoach == null) return;
-        // TODO: Duyệt kế hoạch và lưu vào database
-        Console.WriteLine($"Duyệt kế hoạch: {selectedKeHoach.IdKeHoachBienSoan}");
+        if (duToan == null) return 0;
+        return (duToan.thuLaoViet ?? 0)
+             + (duToan.chiPhiHoiThao ?? 0)
+             + (duToan.chiPhiThamDinh ?? 0)
+             + (duToan.chiPhiInAn ?? 0);
     }
 }

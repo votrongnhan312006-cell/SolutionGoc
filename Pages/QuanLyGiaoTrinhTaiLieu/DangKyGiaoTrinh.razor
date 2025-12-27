@@ -15,7 +15,7 @@
 @inject LinkService linkService
 @inject FileService fileService
 @inject MinioService minioService
-
+@inject NavigationManager navigation
 <style>
     .rz-textbox {
         width: 100%;
@@ -72,30 +72,33 @@
                     <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.TenGTTL" Style="width: 100%;" />
                 </FormField>
 
-                <RadzenLabel Text="2.Loại hình biên soạn *" 
-                     Style="margin-top:16px;display:block;" />
-                <FormField Text="--Chọn loại hình--" Size="12">
-                    <RadzenDropDown AllowClear="true"
-                                    Data="@lstLoaiHinh"
-                                    ValueProperty="IdNhomLoaiGTTL"
-                                    TextProperty="LoaiGTTL"
-                                    @bind-Value="giaoTrinhTaiLieu.IdNhomLoaiGTTL"
-                                    Style="width: 100%;" />
-                </FormField>
+            <RadzenRow Style="margin-top:16px; display:block;">
+                <RadzenColumn Size="6">
+                    <RadzenLabel Text="2. Loại hình biên soạn *" />
+                    <FormField Text="--Chọn loại hình--">
+                        <RadzenDropDown AllowClear="true"
+                                        Data="@lstLoaiHinh"
+                                        ValueProperty="IdNhomLoaiGTTL"
+                                        TextProperty="LoaiGTTL"
+                                        @bind-Value="giaoTrinhTaiLieu.IdNhomLoaiGTTL"
+                                        Style="width: 100%;" />
+                    </FormField>
+                </RadzenColumn>
 
+                <RadzenColumn Size="6">
+                    <RadzenLabel Text="3. Học phần/Môn học dự kiến sử dụng *" />
+                    <FormField Text="--Chọn môn học--">
+                        <RadzenDropDown AllowClear="true"
+                                        Data="@lstMonHoc"
+                                        ValueProperty="IdMonHocGTTL"
+                                        TextProperty="GhiChu"
+                                        @bind-Value="giaoTrinhTaiLieu.IdMonHoc"
+                                        Style="width: 100%;" />
+                    </FormField>
+                </RadzenColumn>
+            </RadzenRow>
 
-                <RadzenLabel Text="3.Học phần/Môn học dự kiến sử dụng *"
-                             Style="margin-top:16px;display:block;" />
-                <FormField Text="--Chọn môn học--" Size="12">
-                    <RadzenDropDown AllowClear="true"
-                                    Data="@lstMonHoc"
-                                    ValueProperty="IdMonHocGTTL"
-                                    TextProperty="GhiChu"
-                                    @bind-Value="giaoTrinhTaiLieu.IdMonHoc"
-                                    Style="width: 100%;" />
-                </FormField>
-
-                <RadzenLabel Text="4.Trình độ áp dụng *"
+            <RadzenLabel Text="4. Trình độ áp dụng *"
                              Style="margin-top:16px;display:block;" />
                 <FormField Text="--Chọn trình độ" Size="12">
                     <RadzenDropDown AllowClear="true"
@@ -106,7 +109,7 @@
                                     Style="width: 100%;" />
                 </FormField>
 
-                <RadzenLabel Text="5.Đơn vị đề xuất"
+                <RadzenLabel Text="5. Đơn vị đề xuất"
                              Style="margin-top:16px;display:block;" />
                 <FormField Text="Đơn vị đề xuất" Size="12">
                     <RadzenDropDown AllowClear="true"
@@ -117,13 +120,13 @@
                                     Style="width: 100%;" />
                 </FormField>
 
-                <RadzenLabel Text="6.Chủ biên dự kiến *"
+                <RadzenLabel Text="6. Chủ biên dự kiến *"
                              Style="margin-top:16px;display:block;" />
                 <FormField Text="Chủ biên dự kiến" Size="12">
                     <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.ChuBien" Style="width: 100%;" />
                 </FormField>
 
-                <RadzenLabel Text="7.Thành viên" 
+                <RadzenLabel Text="7. Thành viên" 
                      Style="margin-top:16px;display:block;" />
                 <FormField Text="Thành viên tham gia" Size="12">
                     <RadzenTextBox @bind-Value="giaoTrinhTaiLieu.ThanhVien" Style="width: 100%;" />
@@ -162,25 +165,32 @@
 
     protected async Task Submit(tbGTTL giaoTrinhTaiLieu)
     {
-        // Save logic - Tùy bạn là thêm mới hay cập nhật
-        if (Record == null || Record.IdGTTL == 0)
+        IDC.Frontend.Services.ActionResult.ActionResult.CreationResult result;
+
+        giaoTrinhTaiLieu.IdGTTL = await client.numServices.GetInt<tbGTTL>("seq_tbGTTL");
+        result = await apiService.Create<tbGTTL>(giaoTrinhTaiLieu);
+        
+
+        if (result.Success)
         {
-            giaoTrinhTaiLieu.IdGTTL = await client.numServices.GetInt<tbGTTL>("seq_tbGTTL");
-            await apiService.Create<tbGTTL>(giaoTrinhTaiLieu);
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Thành công",
+                Detail = "Lưu thông tin giáo trình/tài liệu thành công.",
+                Duration = 4000
+            });
+            navigation.NavigateTo("/DanhSachDeXuatGt");
         }
         else
-            await apiService.Update<tbGTTL>(giaoTrinhTaiLieu);
-
-        Console.WriteLine(
-System.Text.Json.JsonSerializer.Serialize(giaoTrinhTaiLieu)
-);
-
-        notificationService.Notify(
-NotificationSeverity.Info,
-"Debug",
-"Đã vào Submit()"
-);
-    }
-
-  
+        {
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Lỗi",
+                Detail = "Đã có lỗi xảy ra trong quá trình lưu thông tin.",
+                Duration = 4000
+            });
+        }
+    } 
 }

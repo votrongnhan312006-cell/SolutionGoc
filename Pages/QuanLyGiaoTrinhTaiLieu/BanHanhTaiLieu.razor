@@ -2,111 +2,186 @@
 @using QLCongViec.Models
 @using api.Models.QLBienSoan
 @inject DialogService DialogService
+@inject ApiServices apiService
 
-<div class="container-fluid">
-    <h3>3. Ban hành giáo trình</h3>
-    <p class="text-muted">Quản lý việc ban hành các tài liệu đã thẩm định đạt</p>
+<div class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.H5" Weight="FontWeight.Bold">Ban hành giáo trình, tài liệu</RadzenText>
+    <RadzenText TextStyle="TextStyle.Subtitle2" Class="rz-mb-6">Quản lý việc ban hành các thẩm định đạt</RadzenText>
 
     <div class="row">
-        <!-- Cột trái: Danh sách -->
+
+        <!-- ================= LEFT ================= -->
         <div class="col-md-4">
-            <RadzenCard>
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Tất cả</RadzenText>
-                <div class="list-group">
-                    @foreach (var item in lstGTTL)
+            <RadzenCard Class="left-card">
+                <div class="document-list mt-3">
+
+                    @if (lstGTTL == null)
                     {
-                        <div class="list-group-item list-group-item-action @(selectedItem == item ? "active-item" : "")"
-                             @onclick="() => SelectItem(item)" style="cursor: pointer; border-left: 5px solid @(item.TenGTTL == "Chờ ban hành" ? "#ffc107" : "green"); margin-bottom: 5px;">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">@item.TenGTTL</h6>
-
-
-                                @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@item.IdTinhTrang" /> *@
-                            
-                            
-                            </div>
-                            <small>@item.ChuBien</small><br />
-                            <small class="text-muted">@item.IdDonVi</small><br />
-                            <small>Thẩm định: @item.NgayThamDinh?.ToString("dd/MM/yyyy")</small>
-                        </div>
+                        <p>Đang tải dữ liệu...</p>
                     }
+                    else if (!lstGTTL.Any())
+                    {
+                        <p>Không có dữ liệu</p>
+                    }
+                    else
+                    {
+                        @foreach (var item in lstGTTL)
+                        {
+                            <div class="doc-item @(selectedItem == item ? "active" : "")"
+                                 @onclick="() => SelectItem(item)">
+
+                                <div class="doc-header">
+                                    <strong>@item.TenGTTL</strong>
+
+                                    <!-- ✅ SỬA: dùng item, KHÔNG dùng selectedItem -->
+                                    <RadzenBadge Text="@(item.IdTinhTrang == 1 ? "Chờ ban hành" : "Đã ban hành")"
+                                                 Style="@(item.IdTinhTrang == 1
+                                                                                                                                                  ? "background:#FFE8CC;color:#9A4D00"
+                                                                                                                                                  : "background:#E6F4EA;color:#1E7F43")" />
+                        </div>
+
+                                <div class="doc-meta">
+                                    <div>@item.ChuBien</div>
+                                    <div>@item.IdDonVi</div>
+                                    <div>Thẩm định: @item.NgayThamDinh?.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            </div>
+                                        }
+                    }
+
                 </div>
             </RadzenCard>
         </div>
 
-        <!-- Cột phải: Chi tiết -->
+        <!-- ================= RIGHT ================= -->
         <div class="col-md-8">
+
             @if (selectedItem != null)
             {
-                <RadzenCard>
-                    <RadzenText TextStyle="TextStyle.H6">Thông tin tài liệu</RadzenText>
+                <RadzenCard Class="right-card">
+
+                    <h4>Thông tin tài liệu</h4>
+                    <hr />
+
                     <div class="row">
                         <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Subtitle2">Mã tài liệu</RadzenText>
-                            <p><b>@selectedItem.MaTaiLieu</b></p>
+                            <div class="info-item">
+                                <label>Mã tài liệu</label>
+                                <span>@selectedItem.MaTaiLieu</span>
+                            </div>
 
-                            <RadzenText TextStyle="TextStyle.Subtitle2">Tên tài liệu</RadzenText>
-                            <p>@selectedItem.TenGTTL</p>
+                            <div class="info-item">
+                                <label>Tên tài liệu</label>
+                                <span>@selectedItem.TenGTTL</span>
+                            </div>
 
-
-                            @* <RadzenText TextStyle="TextStyle.Subtitle2">Đơn vị</RadzenText>
-                            <p>@selectedItem.idDonVi</p> *@
-
-
+                            <div class="info-item">
+                                <label>Đơn vị</label>
+                                <span>@selectedItem.IdDonVi</span>
+                            </div>
                         </div>
+
                         <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Subtitle2">Trạng thái</RadzenText>
+                            <div class="info-item">
+                                <label>Trạng thái</label>
+                                <RadzenBadge Text="@(selectedItem.IdTinhTrang == 1 ? "Chờ ban hành" : "Đã ban hành")"
+                                             Style="@(selectedItem.IdTinhTrang == 1
+                                                                                                                                      ? "background:#FFE8CC;color:#9A4D00"
+                                                                                                                                      : "background:#E6F4EA;color:#1E7F43")" />
+                        </div>
 
+                            <div class="info-item">
+                                <label>Chủ biên</label>
+                                <span>@selectedItem.ChuBien</span>
+                            </div>
 
-                            @* <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@selectedItem.IdTinhTrang" /> *@
-
-
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="mt-3">Chủ biên</RadzenText>
-                            <p>@selectedItem.ChuBien</p>
-
-                            <RadzenText TextStyle="TextStyle.Subtitle2">Ngày thẩm định</RadzenText>
-                            <p>@selectedItem.NgayThamDinh?.ToString("dd/MM/yyyy")</p>
+                            <div class="info-item">
+                                <label>Ngày thẩm định</label>
+                                <span>@selectedItem.NgayThamDinh?.ToString("dd/MM/yyyy")</span>
+                            </div>
                         </div>
                     </div>
 
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Class="mt-3">
-                        <RadzenText TextStyle="TextStyle.Subtitle2">Tài liệu liên quan</RadzenText>
-                        <RadzenLink Path="#" Text="📄 Bản thảo hoàn thiện" />
-                        <RadzenLink Path="#" Text="📄 Biên bản thẩm định" />
-                        <RadzenLink Path="#" Text="📄 Quyết định giao nhiệm vụ" />
-                    </RadzenStack>
+                    <hr />
 
-                    <div class="mt-4">
-                        <RadzenButton Text="Nhập thông tin ban hành" Icon="check_circle" ButtonStyle="ButtonStyle.Success"
-                                      Click="OpenBanHanhDialog" Class="w-100" />
-                    </div>
+                    <RadzenButton Text="Nhập thông tin ban hành"
+                                  Icon="check_circle"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Class="w-100"
+                                  Click="OpenBanHanhDialog" />
                 </RadzenCard>
-            }
+                        }
             else
             {
                 <RadzenCard>
-                    <p class="text-center text-muted">Vui lòng chọn một đề tài để xem chi tiết.</p>
+                    <p class="text-muted text-center">Vui lòng chọn tài liệu</p>
                 </RadzenCard>
             }
+
         </div>
     </div>
 </div>
 
+
 <style>
-    .active-item {
-        background-color: #f0f8ff;
-        border-color: #007bff;
+    .left-card {
+        padding: 12px;
     }
+
+    .document-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .doc-item {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+    }
+
+        .doc-item.active {
+            background: #f0f6ff;
+            border-left: 4px solid #3b82f6;
+        }
+
+    .doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .doc-meta {
+        font-size: 13px;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
+    .right-card {
+        padding: 20px;
+    }
+
+    .info-item {
+        margin-bottom: 12px;
+    }
+
+        .info-item label {
+            font-size: 13px;
+            color: #6b7280;
+            display: block;
+        }
 </style>
 
-@inject ApiServices apiService
 @code {
-    private List<tbGTTL>? lstGTTL = new();
+    private List<tbGTTL> lstGTTL = new();
     private tbGTTL? selectedItem;
 
     protected override async Task OnInitializedAsync()
     {
         lstGTTL = await apiService.GetAll<tbGTTL>();
+        StateHasChanged();
     }
 
     void SelectItem(tbGTTL item)
@@ -116,14 +191,17 @@
 
     async Task OpenBanHanhDialog()
     {
-        var result = await DialogService.OpenAsync<NhapThongTinBanHanhTaiLieu_Dialog>(
-            $"Nhập thông tin ban hành",
-            new Dictionary<string, object>() { { "TaiLieuId", selectedItem.IdGTTL }, { "TenTaiLieu", selectedItem.TenGTTL } },
-            new DialogOptions() { Width = "700px", Height = "auto" });
+        var result = await DialogService.OpenAsync<BanHanhTaiLieu_Dialog>(
+            "",
+            new Dictionary<string, object>
+            {
+                { "selectedItem", selectedItem }
+            },
+            new DialogOptions { Width = "700px" });
 
         if (result is bool ok && ok)
         {
-            // Reload lại danh sách sau khi lưu thành công
+            lstGTTL = await apiService.GetAll<tbGTTL>();
             StateHasChanged();
         }
     }

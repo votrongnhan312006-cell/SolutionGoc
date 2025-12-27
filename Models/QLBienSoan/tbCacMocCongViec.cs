@@ -7,7 +7,7 @@ namespace api.Models.QLBienSoan
     public class tbCacMocCongViec
     {
         public int idMocCongViec { get; set; }
-        public int idKeHoach{ get; set; }
+        public int? idKeHoach{ get; set; }
         public string? tenMocCongViec { get; set; }
         public DateOnly? ngayDuKien { get; set; }
 

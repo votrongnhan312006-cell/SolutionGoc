@@ -30,7 +30,7 @@
             <RadzenDataGridColumn TItem="tbSangKienCaiTien"
                                   Property="tenSangKienCaiTien"
                                   Title="Tên sáng kiến cải tiến"
-                                  Width="300px"/>
+                                  Width="300px" />
 
             <!-- Tác giả -->
             <RadzenDataGridColumn TItem="tbSangKienCaiTien"
@@ -55,15 +55,15 @@
                     }
                     if (ctx.idTrangThai == 2)
                     {
-                        <RadzenBadge Text="Chờ xét duyệt"
-                                     BadgeStyle="BadgeStyle.Warning"
-                                     Style="padding:8px 12px" />
+                    <RadzenBadge Text="Chờ xét duyệt"
+                                 BadgeStyle="BadgeStyle.Warning"
+                                 Style="padding:8px 12px" />
                     }
                     if (ctx.idTrangThai == 3)
                     {
-                        <RadzenBadge Text="Không phê duyệt"
-                                     BadgeStyle="BadgeStyle.Danger"
-                                     Style="padding:8px 12px" />
+                    <RadzenBadge Text="Không phê duyệt"
+                                 BadgeStyle="BadgeStyle.Danger"
+                                 Style="padding:8px 12px" />
                     }
                 </Template>
             </RadzenDataGridColumn>

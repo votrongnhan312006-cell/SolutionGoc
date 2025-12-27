@@ -1,10 +1,46 @@
-@page "/danhsachdexuatgt"
+@page "/DanhSachDeXuatGt"
+@using QLCongViec.Models.QLBienSoan
 @using Radzen
 @using Radzen.Blazor
 @using api.Models.QLBienSoan
 @inject DialogService DialogService
 
+<style>
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
 
+        /* Được phê duyệt */
+        .status-pill.approved {
+            background-color: #e6f7ec;
+            color: #198754;
+        }
+
+        /* Chờ xét duyệt */
+        .status-pill.pending {
+            background-color: #fff4e5;
+            color: #d39e00;
+        }
+
+        /* Không phê duyệt */
+        .status-pill.rejected {
+            background-color: #fdecea;
+            color: #dc3545;
+        }
+
+        /* Icon Radzen */
+        .status-pill .rz-icon {
+            font-size: 16px;
+        }
+
+</style>
 
 
 <RadzenCard Style="padding:20px">
@@ -19,7 +55,7 @@
                     PageSize="5"
                     ShowPagingSummary="false">
 
-         <Columns> 
+        <Columns>
 
             <!-- STT -->
             <RadzenDataGridColumn Title="STT" Width="60px">
@@ -29,9 +65,9 @@
             </RadzenDataGridColumn>
 
             <!-- TÊN TÀI LIỆU -->
-            <RadzenDataGridColumn Title="Tên tài liệu">
+            <RadzenDataGridColumn Title="Tên tài liệu" Width="170px">
                 <Template Context="ctx">
-                        @ctx.TenGTTL
+                    @ctx.TenGTTL
                     @if (!string.IsNullOrEmpty(ctx.GhiChu))
                     {
                         <div style="font-size:12px;color:#6c757d">
@@ -41,55 +77,87 @@
                 </Template>
             </RadzenDataGridColumn>
 
+
             <!-- LOẠI HÌNH -->
-            <RadzenDataGridColumn Title="Loại hình" >
+            <RadzenDataGridColumn Title="Loại hình" Width="120px">
                 <Template Context="ctx">
                     @lstLoaiHinh?.FirstOrDefault(x => x.IdNhomLoaiGTTL == ctx.IdNhomLoaiGTTL)?.LoaiGTTL
                 </Template>
             </RadzenDataGridColumn>
 
-            <!-- CHỦ BIÊN -->
-            <RadzenDataGridColumn Property="ChuBien" Title="Chủ biên" />
 
-            <!-- NGÀY GỬI -->
-             <RadzenDataGridColumn Title="Bậc học sử dụng">
+            <!-- CHỦ BIÊN -->
+            <RadzenDataGridColumn Property="ChuBien" Title="Chủ biên" Width="120px" TextAlign="TextAlign.Left" />
+
+
+            <!-- BẬC HỌC SỬ DỤNG -->
+            <RadzenDataGridColumn Title="Bậc học sử dụng" Width="100px" TextAlign="TextAlign.Left">
                 <Template Context="ctx">
                     @lstBacHoc?.FirstOrDefault(x => x.IdBacHocSuDungGTTL == ctx.IdBacHocSuDungGTTL)?.BacHocSuDungGTTL
                 </Template>
-            </RadzenDataGridColumn> 
+            </RadzenDataGridColumn>
+
+
 
             <!-- TRẠNG THÁI -->
-            <RadzenDataGridColumn Title="Trạng thái">
-                <Template Context="item">
-                    @TrangThaiBadge(Convert.ToByte(item.IdTinhTrang))
-
+            <RadzenDataGridColumn Title="Trạng thái" Width="220px" TextAlign="TextAlign.Center">
+                <Template Context="ctx">
+                    @if (ctx.IdTinhTrang == 0)
+                    {
+                        <span class="status-pill pending">
+                            <i class="rz-icon rz-clock"></i>
+                            <i class="bx bx-pie-chart"></i>Chờ xét duyệt
+                        </span>
+                    }
+                    @if (ctx.IdTinhTrang == 1)
+                    {
+                        <span class="status-pill approved">
+                            <i class="rz-icon rz-check-circle"></i>
+                            <i class="bx bx-check-double"></i>Được phê duyệt
+                        </span>
+                    }
+                    @if (ctx.IdTinhTrang == 2)
+                    {
+                        <span class="status-pill rejected">
+                            <i class="rz-icon rz-close-circle"></i>
+                            <i class="bx bx-x-circle"></i>Không được phê duyệt
+                        </span>
+                    }
                 </Template>
             </RadzenDataGridColumn>
 
+
+
             <!-- THAO TÁC -->
-            <RadzenDataGridColumn Title="Thao tác" Width="190px">
-                <Template Context="item">
-                    <RadzenStack Orientation="Orientation.Horizontal"
-                                 JustifyContent="JustifyContent.End"
-                                 Gap="1rem">
+            <RadzenDataGridColumn Title="Thao tác" Width="190px" TextAlign="TextAlign.Center">
+                <Template Context="ctx">
+                    <RadzenStack Orientation="Orientation.Vertical"
+                                 AlignItems="AlignItems.Center"
+                                 Gap="6px"
+                                 Style="padding-top:6px;padding-bottom:6px">
 
-                        <RadzenButton Text="Chi tiết đề tài"
-                                      Icon="send"
-                                      ButtonStyle="ButtonStyle.Primary"
-                                      Style="min-width:90px"
-                                      Click="@(args => MoChiTietDeTai(item))" />
+                        <RadzenButton Text="Chi tiết"
+                                      Icon="info"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Class="rz-shadow-sm"
+                                      Style="width:150px;height:40px;border-radius:6px;text-align:center;justify-content:center"
+                                      Click="@(args => MoChiTietDeTai(ctx))" />
 
-                        <RadzenButton Text="Xét duyệt"
-                                      Icon="send"
-                                      ButtonStyle="ButtonStyle.Primary"
-                                      Style="min-width:90px"
-                                      Click="@(args => MoChiTiet(item))" />
+                        @if (ctx.IdTinhTrang == 0)
+                        {
+                            <RadzenButton Text="Xét duyệt"
+                                          Icon="check"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Class="rz-shadow-sm"
+                                          Style="width:150px;height:40px;border-radius:6px;text-align:center;justify-content:center"
+                                          Click="@(args => XetDuyet(ctx))" />
+                        }
                     </RadzenStack>
                 </Template>
             </RadzenDataGridColumn>
 
 
-         </Columns> 
+        </Columns>
     </RadzenDataGrid>
 </RadzenCard>
 
@@ -102,12 +170,14 @@
     //Lấy data từ các danh mục
     private List<tbNhomLoaiGTTL> lstLoaiHinh = new();
     private List<tbBacHocSuDungGTTL> lstBacHoc = new();
+    private List<tbTrangThai> lstTrangThai = new();
 
     protected override async Task OnInitializedAsync()
     {
         lstGTTL = await apiService.GetAll<tbGTTL>();
         lstLoaiHinh = await apiService.GetAll<tbNhomLoaiGTTL>();
         lstBacHoc = await apiService.GetAll<tbBacHocSuDungGTTL>();
+        lstTrangThai = await apiService.GetAll<tbTrangThai>();
     }
 
     async Task MoChiTietDeTai(tbGTTL item)
@@ -127,9 +197,9 @@
     }
 
     // ====== POPUP CHI TIẾT ĐỀ XUẤT ======
-    async Task MoChiTiet(tbGTTL item)
+    async Task XetDuyet(tbGTTL item)
     {
-        await DialogService.OpenAsync<ChiTietDeXuat_Dialog>(
+        await DialogService.OpenAsync<XetDuyetDeTai_Dialog>(
             "",
             new Dictionary<string, object>
             {

@@ -6,7 +6,7 @@ namespace QLCongViec.Models.SangKienCaiTien
     public class tbSangKienCaiTien
     {
         public int idSangKienCaiTien { get; set; }
-        public int? idCanBo { get; set; }
+        public int? idCanBo { get; set; } = 0;
         public string? tenSangKienCaiTien { get; set; }
         public int? idCap { get; set; }
         public string? namHoc { get; set; }

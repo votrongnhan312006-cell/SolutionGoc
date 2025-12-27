@@ -55,7 +55,7 @@ namespace api.Models.QLBienSoan
         public int? IdTienDo { get; set; }
 
         public int? IdketQuaThamDinh { get; set; }
-
+        
         public int? IdDuToan { get; set; } = 0;
 
         public int? IdKeHoach { get; set; }

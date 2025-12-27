@@ -1,0 +1,95 @@
+@using api.Models.QLBienSoan
+@inject ApiServices apiService
+@inject DialogService DialogService
+@inherits OwningComponentBase
+
+
+<RadzenTemplateForm Data="@model" TItem="tbGTTL" Submit="@HandleSubmit">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H5">Nhập thông tin ban hành</RadzenText>
+        <p class="text-muted">@selectedItem?.TenGTTL</p>
+
+        <hr />
+
+        <!-- Dòng 1: Số quyết định và Ngày ký -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-6">
+                <RadzenLabel Text="Số quyết định *" Component="SoQD" Style="margin-bottom: 8px; display: block;" />
+                <RadzenTextBox @bind-Value="model.SqdBanHanh" Placeholder="Ví dụ: 789/QĐ-HV" Style="width:100%" />
+            </div>
+            <div class="col-md-6">
+                <RadzenLabel Text="Ngày ký *" Component="NgayKy" Style="margin-bottom: 8px; display: block;" />
+                <RadzenDatePicker @bind-Value="model.NgayBanHanh" DateFormat="dd/MM/yyyy" Style="width:100%" />
+            </div>
+        </div>
+
+        <!-- Dòng 2: Đơn vị ban hành -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-12">
+                <RadzenLabel Text="Đơn vị ban hành" Component="DonVi" Style="margin-bottom: 8px; display: block;" />
+                <RadzenTextBox Placeholder="Học viện" Style="width:100%" ReadOnly = "true"/>
+            </div>
+        </div>
+
+        <!-- Dòng 3: Người ký -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-12">
+                <RadzenLabel Text="Người ký" Component="NguoiKy" Style="margin-bottom: 8px; display: block;" />
+                <RadzenTextBox @bind-Value="model.GhiChu" Placeholder="Ví dụ: Giám đốc Nguyễn Văn A" Style="width:100%" />
+            </div>
+        </div>
+
+        <!-- Dòng 4: Thông tin xuất bản -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-6">
+                <RadzenLabel Text="Số lượng xuất bản" Component="SoLuong" Style="margin-bottom: 8px; display: block;" />
+                <RadzenNumeric @bind-Value="model.SoBanIn" Placeholder="Ví dụ: 500" Style="width:100%" />
+            </div>
+            <div class="col-md-6">
+                <RadzenLabel Text="Đơn vị in ấn" Component="DonViIn" Style="margin-bottom: 8px; display: block;" />
+                <RadzenTextBox @bind-Value="model.FileDangKy" Placeholder="Tên đơn vị in ấn" Style="width:100%" />
+            </div>
+        </div>
+
+        <!-- Dòng 5: Ngày dự kiến có sách -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-12">
+                <RadzenLabel Text="Ngày dự kiến có sách" Component="NgayDuKien" Style="margin-bottom: 8px; display: block;" />
+                <RadzenDatePicker @bind-Value="model.HanHoanThanh" DateFormat="dd/MM/yyyy" Style="width:100%" />
+            </div>
+        </div>
+
+        <!-- Dòng 6: File quyết định ban hành -->
+        <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-12">
+                <RadzenLabel Text="File quyết định ban hành *" Component="FileQD" Style="margin-bottom: 8px; display: block;" />
+                <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 40px; text-align: center; background-color: #fafafa;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+                    <div style="color: #666; margin-bottom: 8px;">Tải lên quyết định ban hành</div>
+                    <div style="color: #999; font-size: 12px;">PDF, DOC, DOCX (tối đa 10MB)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút lưu -->
+        <div class="mt-3" style="margin-top: 24px;">
+            <RadzenButton Text="Lưu" Icon="save" ButtonStyle="ButtonStyle.Primary" Type="Submit" Style="width:100%" />
+        </div>
+    </RadzenCard>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public tbGTTL selectedItem { get; set; }
+    private tbGTTL model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+         model = selectedItem; // Gắn dữ liệu từ trang cha
+    }
+
+    async Task HandleSubmit()
+    {
+        await apiService.Update<tbGTTL>(model);
+        DialogService.Close(true);
+    }
+}

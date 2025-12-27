@@ -129,13 +129,15 @@
     private tbGTTL giaoTrinhTaiLieu = new();
     private tbKeHoach keHoach = new();
     private tbDuToan duToan = new();
-    private List<tbCacMocCongViec> lstMocCongViec = new();
-
-    //Khởi tạo ban đầu có 1 công việc
-    protected override async Task OnInitializedAsync()
+    private List<tbCacMocCongViec> lstMocCongViec = new()
     {
-        lstMocCongViec.Add(new());
-    }
+        new tbCacMocCongViec{ tenMocCongViec="Hoàn thành đề cương chi tiết", ngayDuKien = null },
+        new tbCacMocCongViec{ tenMocCongViec="Nộp bản thảo lần 1", ngayDuKien = null },
+        new tbCacMocCongViec{ tenMocCongViec="Tổ chức bản thảo", ngayDuKien = null },
+        new tbCacMocCongViec{ tenMocCongViec="Nộp bản thảo lần cuối", ngayDuKien = null }
+    };
+
+
 
     void ThemMoc() => lstMocCongViec.Add(new()); 
     void XoaMoc(tbCacMocCongViec moc) => lstMocCongViec.Remove(moc);

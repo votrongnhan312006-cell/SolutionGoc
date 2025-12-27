@@ -3,109 +3,226 @@
 @using Radzen.Blazor
 @using QLCongViec.Models.SangKienCaiTien
 
-<RadzenCard Style="padding:20px">
-    <h3>Danh sách sáng kiến cải tiến</h3>
-    <h4>Chỉ hiển thị các sáng kiến đã được Hội đồng phê duyệt</h4>
-    <p style="color:#6c757d;margin-bottom:20px">
-        Hoàn thiện hồ sơ sáng kiến cải tiến
-    </p>
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+<style>
+    /* ===== CARD ===== */
+    .skct-card {
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgba(0,0,0,.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    /* ===== HEADER ===== */
+    .skct-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .skct-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .skct-header p {
+            font-size: 14px;
+            color: #64748b;
+            margin: 6px 0 0;
+        }
+
+    /* ===== GRID ===== */
+    .skct-grid {
+        border-radius: 12px;
+        overflow: hidden;
+        font-size: 14px;
+    }
+
+        .skct-grid .rz-datatable-thead th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .skct-grid .rz-datatable-row {
+            transition: background-color .15s ease;
+        }
+
+            .skct-grid .rz-datatable-row:hover {
+                background-color: #f8fafc;
+            }
+
+    /* ===== SÁNG KIẾN ===== */
+    .skct-title {
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .skct-desc {
+        font-size: 13px;
+        color: #64748b;
+        margin-left: 26px;
+        margin-top: 4px;
+    }
+
+    /* ===== THIẾU HỒ SƠ ===== */
+    .skct-missing {
+        background: #fff7ed;
+        border-left: 4px solid #fb923c;
+        padding: 6px 8px;
+        border-radius: 6px;
+    }
+
+    .skct-warning {
+        color: #dc2626;
+        font-size: 18px;
+    }
+
+    /* ===== BUTTON ===== */
+    .skct-action-btn {
+        border-radius: 10px;
+        font-weight: 500;
+    }
+
+    /* ===== BADGE ===== */
+    .skct-status {
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 999px;
+    }
+    /* ===== BADGE ĐƯỢC PHÊ DUYỆT (Y HÌNH) ===== */
+    .skct-status-approved {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        min-width: 150px;
+        justify-content: center;
+        border-radius: 999px !important;
+        background-color: #eafaf1 !important;
+        color: #15803d !important;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+        /* ICON ✓ — ÉP HIỂN THỊ */
+        .skct-status-approved .rz-icon {
+            display: inline-flex !important;
+            font-size: 16px;
+            color: #16a34a !important;
+            opacity: 1 !important;
+        }
+</style>
+
+<RadzenCard Class="skct-card" Style="padding:20px">
+
+    <div class="skct-header">
+        <div>
+            <h3>Danh sách sáng kiến cải tiến</h3>
+            <p>Danh mục sáng kiến đã được Hội đồng phê duyệt</p>
+        </div>
+
+    </div>
 
     <RadzenDataGrid Data="@dsSangKienDaDuyet"
                     TItem="tbSangKienCaiTien"
+                    Class="skct-grid"
                     AllowPaging="true"
-                    PageSize="10"
-                    AllowSorting="true"
-                    AllowFiltering="true">
+                    PageSize="10">
 
         <Columns>
 
             <!-- STT -->
-            <RadzenDataGridColumn Title="Số thứ tự"
-                                  Width="80px"
-                                  TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn Title="STT" Width="70px" TextAlign="TextAlign.Center">
                 <Template Context="item">
                     @(dsSangKienDaDuyet.IndexOf(item) + 1)
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- TÊN SÁNG KIẾN -->
-            <RadzenDataGridColumn Title="Tên sáng kiến cải tiến"
-                                  Width="320px">
+            <RadzenDataGridColumn Title="Tên sáng kiến cải tiến" Width="320px">
                 <Template Context="item">
-                    <div>
+                    <div class="skct-title @(CanhBaoThieuHoSo(item) ? "skct-missing" : "")">
                         @if (CanhBaoThieuHoSo(item))
                         {
                             <RadzenIcon Icon="error"
-                                        Style="color:#dc3545;margin-right:8px" />
+                                        Class="skct-warning" />
                         }
-                        <strong>@item.tenSangKienCaiTien</strong>
+                        <span>@item.tenSangKienCaiTien</span>
                     </div>
 
                     @if (!string.IsNullOrEmpty(item.moTa))
                     {
-                        <small style="color:#6c757d;display:block;margin-top:4px">
+                        <div class="skct-desc">
                             @item.moTa
-                        </small>
+                        </div>
                     }
                 </Template>
             </RadzenDataGridColumn>
 
-            <!-- CẤP / LOẠI -->
-            <RadzenDataGridColumn Title="Cấp sáng kiến"
-                                  Width="160px">
+            <!-- CẤP -->
+            <RadzenDataGridColumn Title="Cấp" Width="120px">
                 <Template Context="item">
-                    @(item.idCap.HasValue ? $"Cấp {item.idCap}" : "")
+                    Học viện
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- TÁC GIẢ -->
-            <RadzenDataGridColumn Property="tenTacGia"
-                                  Title="Tác giả"
-                                  Width="180px" />
-
-            <!-- NGÀY THỰC HIỆN -->
-            <RadzenDataGridColumn Title="Ngày thực hiện"
-                                  Width="130px"
-                                  TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn Title="Tác giả" Width="200px">
                 <Template Context="item">
-                    @(item.ngayThucHien.HasValue
-                                        ? item.ngayThucHien.Value.ToString("dd/MM/yyyy")
-                                        : "")
+                    <div style="font-weight:600;color:#0f172a">
+                        @item.tenTacGia
+                    </div>
+                    <div style="font-size:13px;color:#64748b">
+                        @item.capBacTacGia
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+
+            <!-- NGÀY -->
+            <RadzenDataGridColumn Title="Ngày thực hiện" Width="130px" TextAlign="TextAlign.Center">
+                <Template Context="item">
+                    @item.ngayThucHien?.ToString("dd/MM/yyyy")
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- TRẠNG THÁI -->
-            <RadzenDataGridColumn Title="Trạng thái"
-                                  Width="160px"
-                                  TextAlign="TextAlign.Center">
-                <Template>
-                    <RadzenBadge Text="Đã phê duyệt"
-                                 BadgeStyle="BadgeStyle.Success"
-                                 Style="padding:8px 12px" />
+            <RadzenDataGridColumn Title="Trạng thái" Width="190px" TextAlign="TextAlign.Center">
+                <Template Context="item">
+                    <div class="skct-status-approved">
+                        <RadzenIcon Icon="check_circle" />
+                        <span>Được phê duyệt</span>
+                    </div>
                 </Template>
             </RadzenDataGridColumn>
 
             <!-- THAO TÁC -->
-            <RadzenDataGridColumn Title="Thao tác"
-                                  Width="160px"
-                                  TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn Title="Thao tác" Width="160px" TextAlign="TextAlign.Center">
                 <Template Context="item">
-                    <div style="display:flex;gap:6px;justify-content:center">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.Center"
+                                 Gap="6px">
 
-                        <RadzenButton Icon="visibility"
+                        <RadzenButton Icon="assignment"
                                       Size="ButtonSize.Small"
-                                      ButtonStyle="ButtonStyle.Info"
+                                      ButtonStyle="ButtonStyle.Primary"
                                       Variant="Variant.Outlined"
-                                      title="Chi tiết"
-                                      Click="@(() => XemChiTiet(item.idSangKienCaiTien))" />
-
-                        <RadzenButton Icon="edit"
-                                      Size="ButtonSize.Small"
-                                      ButtonStyle="ButtonStyle.Success"
-                                      Variant="Variant.Outlined"
-                                      title="Hoàn thiện hồ sơ" />
-                                      @* Click="@(() => HoanThienHoSo(item.idSangKienCaiTien))" /> *@
-                    </div>
+                                      Class="skct-action-btn"
+                                      Title="Xử lý – hoàn thiện hồ sơ"
+                                      Click="@(() => XuLyHoanThienHoSo(item))" />
+                    </RadzenStack>
                 </Template>
             </RadzenDataGridColumn>
 
@@ -113,15 +230,12 @@
     </RadzenDataGrid>
 </RadzenCard>
 
-
-
 @code {
 
     List<tbSangKienCaiTien> dsSangKienDaDuyet = new();
 
     protected override void OnInitialized()
     {
-        // DEMO DATA – sau này thay bằng API
         dsSangKienDaDuyet = new()
         {
             new tbSangKienCaiTien
@@ -154,18 +268,19 @@
     }
 
     bool CanhBaoThieuHoSo(tbSangKienCaiTien sk)
+        => string.IsNullOrEmpty(sk.fileKetQua);
+
+
+    async Task XuLyHoanThienHoSo(tbSangKienCaiTien sk)
     {
-        // Ví dụ: thiếu file kết quả
-        return string.IsNullOrEmpty(sk.fileKetQua);
+        await DialogService.OpenAsync<ChiTietDeXuat_Dialog>(
+            "Hoàn thiện hồ sơ",
+            new Dictionary<string, object>
+            {
+            { "SelectedGTTL", sk }
+            }
+        );
     }
 
-    void XemChiTiet(int id)
-    {
-        Console.WriteLine($"Xem chi tiết sáng kiến: {id}");
-    }
 
-    // void HoanThienHoSo(int id)
-    // {
-    //     Console.WriteLine($"Hoàn thiện hồ sơ sáng kiến: {id}");
-    // }
 }

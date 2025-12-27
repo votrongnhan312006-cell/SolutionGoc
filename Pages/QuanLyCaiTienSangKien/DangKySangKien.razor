@@ -1,125 +1,173 @@
 ﻿@page "/DangKySkct"
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
+@using System.Globalization
+@using QLCongViec.Components.FileManager
+@using Minio
+@using Minio.DataModel
+@using Minio.DataModel.Args
+@using QLCongViec.Models
 @using QLCongViec.Models.SangKienCaiTien
-@using Radzen
-@using Radzen.Blazor
-
-<RadzenTemplateForm Data="@sangkien"
-                    TItem="tbSangKienCaiTien"
-                    Submit="@OnSubmit">
-
-    <RadzenCard Style="max-width:800px;margin:auto;padding:24px;">
-        <h3>Đăng ký quản lý sáng kiến / cải tiến</h3>
-
-        <!-- 1. Tác giả -->
-        <RadzenLabel Text="1. Họ và tên cá nhân (nhóm) thực hiện *" 
-                     Style="margin-top:16px;display:block;" />
-        <div class="row">
-            <div class="col">
-                <RadzenTextBox Name="TacGia"
-                               @bind-Value="sangkien.tenTacGia"
-                               Placeholder="Tác giả"
-                               Style="width:100%" />
-                <RadzenRequiredValidator Component="TacGia"
-                                         Text="Vui lòng nhập tác giả" />
-            </div>
-            <div class="col">
-                <RadzenTextBox @bind-Value="sangkien.capBacTacGia"
-                               Placeholder="Cấp bậc, chức vụ"
-                               Style="width:100%" />
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-            <div class="col">
-                <RadzenTextBox @bind-Value="sangkien.tenDongTacGia"
-                               Placeholder="Đồng tác giả"
-                               Style="width:100%" />
-            </div>
-            <div class="col">
-                <RadzenTextBox @bind-Value="sangkien.capBacDongTacGia"
-                               Placeholder="Cấp bậc, chức vụ"
-                               Style="width:100%" />
-            </div>
-        </div>
-
-        @* <!-- 2. Đơn vị -->
-        <RadzenLabel Text="2. Đơn vị thực hiện" 
-                     Style="margin-top:16px;display:block;" />
-        <RadzenTextBox @bind-Value="sangkien.d"
-                       Placeholder="Ví dụ: Khoa CNTT"
-                       Style="width:100%" /> *@
-
-        <!-- 3. Tên sáng kiến -->
-        <RadzenLabel Text="3. Tên sáng kiến / cải tiến *" 
-                     Style="margin-top:16px;display:block;" />
-        <RadzenTextBox Name="TenSangKien"
-                       @bind-Value="sangkien.tenSangKienCaiTien"
-                       Placeholder="Nhập tên sáng kiến"
-                       Style="width:100%" />
-        <RadzenRequiredValidator Component="TenSangKien"
-                                 Text="Vui lòng nhập tên sáng kiến" />
-
-        <!-- 4. File -->
-        <RadzenLabel Text="4. Nội dung đăng ký cải tiến (file)" 
-                     Style="margin-top:16px;display:block;" />
-        <InputFile OnChange="@OnFileChange"
-                   accept=".pdf,.doc,.docx,.xls,.xlsx"
-                   class="form-control" />
-        @if (!string.IsNullOrEmpty(fileMessage))
-        {
-            <small class="text-muted">@fileMessage</small>
-        }
-
-        <!-- 5. Thời gian / địa điểm / phạm vi -->
-        <RadzenLabel Text="5. Dự kiến thực hiện" 
-                     Style="margin-top:16px;display:block;" />
-        <RadzenDatePicker @bind-Value="sangkien.ngayThucHien"
-                          DateFormat="dd/MM/yyyy"
-                          Placeholder="Chọn ngày thực hiện"
-                          Style="width:100%;margin-bottom:8px;" />
-
-        <RadzenTextBox @bind-Value="sangkien.diaDiemThucHien"
-                       Placeholder="Địa điểm thực hiện"
-                       Style="width:100%;margin-bottom:8px;" />
-
-        <RadzenTextArea @bind-Value="sangkien.phamViThucHien"
-                        Placeholder="Phạm vi thực hiện"
-                        Rows="3"
-                        Style="width:100%" />
-
-        <RadzenButton Text="Gửi đăng ký"
-                      ButtonStyle="ButtonStyle.Primary"
-                      ButtonType="ButtonType.Submit"
-                      Style="margin-top:20px" />
-    </RadzenCard>
-
-</RadzenTemplateForm>
-
-
-@inject AuthenServices authService
+@using api.Models.QLBienSoan
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject NotificationService notificationService
+@inject DialogService DialogService
 @inject ApiServices apiService
-@code {
-    string? fileMessage;
-    public tbSangKienCaiTien? sangkien = new tbSangKienCaiTien();
+@inject AuthenServices authService
+@inject LinkService linkService
+@inject FileService fileService
+@inject MinioService minioService
+@inject NavigationManager navigation
 
-    protected async Task OnSubmit(tbSangKienCaiTien model)
-    {
-        var username = await authService.GetUserName();
-        model.idSangKienCaiTien = 2;
-        await apiService.Create<tbSangKienCaiTien>(model);
+<style>
+    .rz-textbox {
+        width: 100%;
     }
 
-    void OnFileChange(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file != null)
-        {
-            // sangkien.FileNoiDung = file;
-            fileMessage = $"Đã chọn: {file.Name} ({file.Size / 1024} KB)";
-        }
+    .rz-dialog-titlebar {
+        margin-left: 20px;
+    }
+</style>
+<style>
+    fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 0px 25px 30px 25px;
+        */ margin-bottom: 10px;
+        margin-top: 0px;
+    }
+
+    .filebox-fieldset {
+        border: 2px solid #dedede;
+        border-radius: 5px;
+        padding: 10px 13px 10px 13px;
+        margin-bottom: 40px; /* Lề dưới dày hơn */
+        margin-top: 0px;
+    }
+
+</style>
+<style>
+    .form-wrapper{
+        border: 2px solid #dedede;
+        border-radius: 10px;
+        padding: 20px 10px 10px 10px !important;
+        margin-top: 8px !important;
+        background: #ffffff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     
+</style>
+
+<Waiting Show="@isLoading" Message="Đang tải dữ liệu..." />
+<Form TItem="tbSangKienCaiTien" Record="@sangKienCaiTien" OnSubmit="Submit">
+    <MoreForms>
+
+        <div style="margin-top:16px;margin-left: 16px;margin-bottom: 35px;display:block;line-height: 0.3;" class="rz-label">
+           <h2>Đăng ký quản lý sáng kiến / cải tiến</h2>
+           <tr>Vui lòng điền đầy đủ thông tin để đăng ký đề xuất biên soạn giáo trình/tài liệu</tr>
+       </div>
+        <fieldset>
+
+                <RadzenLabel Text="1. Thông tin tác giả, đồng tác giả"
+                             Style="margin-top:16px;display:block;" />
+
+                <RadzenRow Style="margin-top:10px;display:block;">
+                    <RadzenColumn Size="6">
+                        <FormField Text="Tên tác giả">
+                        <RadzenTextBox @bind-Value="sangKienCaiTien.tenTacGia" Style="width: 100%;" />
+                        </FormField>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="6">
+                        <FormField Text="Cấp bậc, chức vụ tác giả">
+                        <RadzenTextBox @bind-Value="sangKienCaiTien.capBacTacGia" Style="width: 100%;" />
+                        </FormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow>
+                    <RadzenColumn Size="6">
+                        <FormField Text="Tên đồng tác giả">
+                        <RadzenTextBox @bind-Value="sangKienCaiTien.tenDongTacGia" Style="width: 100%;" />
+                        </FormField>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="6">
+                        <FormField Text="Cấp bậc, chức vụ đồng tác giả">
+                        <RadzenTextBox @bind-Value="sangKienCaiTien.capBacDongTacGia" Style="width: 100%;" />
+                        </FormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+
+            <RadzenLabel Text="2. Tên sáng kiến cải tiến"
+                         Style="margin-top:16px;display:block;" />
+            <FormField Text="Nhập tên sáng kiến" Size="12">
+                <RadzenTextBox @bind-Value="sangKienCaiTien.tenSangKienCaiTien" Style="width: 100%;" />
+            </FormField>
+
+
+                <RadzenLabel Text="4. Dự kiến thực hiện"
+                             Style="margin-top:16px;display:block;" />
+           <FormField Text="Ngày thực hiện" Size="12">
+                <RadzenDatePicker @bind-Value="sangKienCaiTien.ngayThucHien" Style="width:100%" DateFormat="dd/MM/yyyy" Placeholder="Chọn ngày thực hiện" />
+            </FormField>
+
+
+
+            <FormField Text="Địa điểm thực hiện" Size="12">
+                <RadzenTextBox @bind-Value="sangKienCaiTien.diaDiemThucHien" Style="width: 100%;" />
+            </FormField>
+            <FormField Text="Phạm vi thực hiện" Size="12">
+                <RadzenTextBox @bind-Value="sangKienCaiTien.phamViThucHien" Style="width: 100%;" />
+            </FormField>
+
+        </fieldset>
+    </MoreForms>
+</Form>
+
+@code {
+    // SỦA Ở ĐÂY
+    [Parameter] public tbSangKienCaiTien Record { get; set; }
+    bool isLoading = false;
+    tbSangKienCaiTien sangKienCaiTien = new tbSangKienCaiTien();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await Task.Delay(100);
+        sangKienCaiTien = (Record == null || Record.idSangKienCaiTien == 0) ? sangKienCaiTien : Record;
+        isLoading = false;
+    }
+
+    protected async Task Submit(tbSangKienCaiTien sangKienCaiTien)
+    {
+        IDC.Frontend.Services.ActionResult.ActionResult.CreationResult result;
+
+        // Save logic - Tùy bạn là thêm mới hay cập nhật
+        sangKienCaiTien.idSangKienCaiTien = await client.numServices.GetInt<tbSangKienCaiTien>("seq_tbSangKienCaiTien");
+        result = await apiService.Create<tbSangKienCaiTien>(sangKienCaiTien);
+
+        if (result.Success)
+        {
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Thành công",
+                Detail = "Lưu thông tin giáo trình/tài liệu thành công.",
+                Duration = 4000
+            });
+            navigation.NavigateTo("/DanhSachDeXuatSkct");
+        }
+        else
+        {
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Lỗi",
+                Detail = "Đã có lỗi xảy ra trong quá trình lưu thông tin.",
+                Duration = 4000
+            });
+        }
+    }
 }

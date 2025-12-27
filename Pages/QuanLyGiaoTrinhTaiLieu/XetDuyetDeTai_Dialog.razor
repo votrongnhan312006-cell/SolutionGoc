@@ -1,0 +1,94 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using api.Models.QLBienSoan
+
+@inject DialogService DialogService
+@inject ApiServices apiService
+
+<RadzenStack Gap="1.2rem" Class="rz-p-2">
+    <RadzenStack Gap="0">
+        <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-mb-0">
+            Xét duyệt đề xuất
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption">@SelectedGTTL?.TenGTTL</RadzenText>
+    </RadzenStack>
+
+    <hr class="rz-m-0" />
+
+    <div>
+        <RadzenLabel Text="Ngày giao nhiệm vụ" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenDatePicker @bind-Value="@SelectedGTTL.NgayGiaoNV"
+                          Style="width: 100%;"
+                          DateFormat="dd/MM/yyyy"
+                          Placeholder="dd/mm/yyyy" />
+    </div>
+
+    <div>
+        <RadzenLabel Text="Hạn hoàn thành" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenDatePicker @bind-Value="@SelectedGTTL.HanHoanThanh"
+                          Style="width: 100%;"
+                          DateFormat="dd/MM/yyyy"
+                          Placeholder="dd/mm/yyyy" />
+    </div>
+
+    <div>
+        <RadzenLabel Text="Số quyết định phê duyệt" Style="font-weight: bold; font-size: 13px;" />
+        <FormField Text="Tên giáo trình tài liệu" Size="12">
+            <RadzenTextBox @bind-Value="SelectedGTTL.SqdGiaoNV" Style="width: 100%;" />
+        </FormField>
+    </div>
+
+    <div>
+        <RadzenLabel Text="Văn bản quyết định phê duyệt *" Style="font-weight: bold; font-size: 13px;" />
+        <RadzenUpload Url="upload/single"
+                      Class="custom-upload-box"
+                      Multiple="false"
+                      Accept=".pdf,.doc,.docx">
+            <ChildContent>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-p-4">
+                    <RadzenIcon Icon="cloud_upload" Style="font-size: 30px; color: #aaa;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">
+                        Tải lên văn bản quyết định phê duyệt
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline">
+                        PDF, DOC, DOCX (tối đa 10MB)
+                    </RadzenText>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenUpload>
+    </div>
+
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.End"
+                 Gap="10px"
+                 Class="rz-mt-4">
+        <RadzenButton Text="KHÔNG PHÊ DUYỆT"
+                      Click="@(() => Reject())"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Style="min-width: 120px;" />
+        <RadzenButton Text="PHÊ DUYỆT"
+                      Click="@(() => Approve())"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Style="min-width: 120px;" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public tbGTTL? SelectedGTTL { get; set; }
+
+    protected async void Approve()
+    {
+        SelectedGTTL!.IdTinhTrang = 1; // ví dụ: 1 = được phê duyệt
+        await apiService.Update<tbGTTL>(SelectedGTTL);
+
+        DialogService.Close(true);
+    }
+
+    protected async void Reject()
+    {
+        SelectedGTTL!.IdTinhTrang = 2; // 2 = không được phê duyệt
+        await apiService.Update<tbGTTL>(SelectedGTTL);
+
+        DialogService.Close(false);
+    }
+}

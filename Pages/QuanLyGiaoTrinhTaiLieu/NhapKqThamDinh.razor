@@ -1,4 +1,4 @@
-﻿@page "/thamdinhgt"
+﻿@page "/ThamDinhGt"
 @using Radzen
 @using Radzen.Blazor
 @using api.Models.QLBienSoan
@@ -65,10 +65,10 @@
                                 Class="@(selectedGTTL?.IdGTTL == item.IdGTTL ? "item-card item-card-selected rz-p-3" : "item-card rz-p-3")">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Start">
                             <RadzenStack Gap="4px" Style="width: 75%;">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Weight="FontWeight.Bold" Class="rz-mb-0">@item.
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Weight="FontWeight.Bold" Class="rz-mb-0">@item.TenGTTL
                                 </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">@item.ChuBien</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">@GetTenDonVi(item.IdDonVi)</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">Chủ biên: @item.ChuBien</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">Đơn vị: @lstDonVi?.FirstOrDefault(x => x.IdDonVi == item.IdDonVi)?.DonVi</RadzenText>
                                 @* <RadzenText TextStyle="TextStyle.Caption">Nộp: @item.NgayGuiDeXuat?.ToString("dd/MM/yyyy")</RadzenText> *@
                             </RadzenStack>
                             <RadzenBadge BadgeStyle="@GetBadgeStyle(Convert.ToByte(item.IdTinhTrang))" Text="@GetTrangThai(Convert.ToByte(item.IdTinhTrang))" IsPill="true" />
@@ -87,14 +87,14 @@
 
                     <RadzenRow Class="rz-mb-6">
                         <RadzenColumn Size="6">
-                            <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Mã tài liệu</RadzenText>
-                            <RadzenText Class="rz-mb-4">@selectedGTTL.MaTaiLieu</RadzenText>
+                            @* <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Mã tài liệu</RadzenText>
+                            <RadzenText Class="rz-mb-4">@selectedGTTL.MaTaiLieu</RadzenText> *@
 
                             <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Tên giáo trình/tài liệu</RadzenText>
                             <RadzenText Class="rz-mb-4">@selectedGTTL.TenGTTL</RadzenText>
 
                             <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Đơn vị</RadzenText>
-                            <RadzenText>@GetTenDonVi(selectedGTTL.IdDonVi)</RadzenText>
+                            <RadzenText>@lstDonVi?.FirstOrDefault(x => x.IdDonVi == selectedGTTL.IdDonVi)?.DonVi</RadzenText>
                         </RadzenColumn>
                         <RadzenColumn Size="6">
                             <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Trạng thái</RadzenText>
@@ -103,8 +103,8 @@
                             <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Chủ biên</RadzenText>
                             <RadzenText Class="rz-mb-4">@selectedGTTL.ChuBien</RadzenText>
 
-                            <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Ngày gửi đề xuất</RadzenText>
-                            @* <RadzenText>@selectedGTTL.NgayGuiDeXuat?.ToString("dd/MM/yyyy")</RadzenText> *@
+                            <RadzenText TextStyle="TextStyle.Caption" Weight="FontWeight.Bold">Ngày thẩm định</RadzenText>
+                            <RadzenText>@selectedGTTL.NgayThamDinh?.ToString("dd/MM/yyyy")</RadzenText>
                         </RadzenColumn>
                     </RadzenRow>
 
@@ -152,11 +152,13 @@
 @inject ApiServices apiService
 @code {
     private List<tbGTTL> lstGTTL = new();
-    private tbGTTL? selectedGTTL;
+    private tbGTTL? selectedGTTL = new();
     private tbKetQuaThamDinhNoiDung kqThamDinh = new();
+    private List<tbDonVi> lstDonVi = new();
 
     protected override async Task OnInitializedAsync()
     {
+        lstDonVi = await apiService.GetAll<tbDonVi>();
         lstGTTL = await apiService.GetAll<tbGTTL>();
     }
 
@@ -180,84 +182,20 @@
         _ => "Không xác định"
     };
 
-    string GetTenDonVi(int? idDonVi)
-    {
-        // TODO: Gọi API hoặc từ cache để lấy tên đơn vị
-        return idDonVi switch
-        {
-            1 => "Khoa Cơ khí",
-            2 => "Khoa Điện",
-            3 => "Khoa CNTT",
-            4 => "Khoa Kinh tế",
-            _ => "Chưa xác định"
-        };
-    }
-
     async Task ShowInputResultDialog()
     {
-        if (selectedGTTL == null) return;
-
-        await DialogService.OpenAsync("Cập nhật kết quả", ds =>
-            @<RadzenStack Gap="1.2rem" Class="rz-p-2">
-    <RadzenStack Gap="0">
-        <RadzenText TextStyle="TextStyle.H6" Weight="FontWeight.Bold" Class="rz-mb-0">Nhập kết quả thẩm định</RadzenText>
-        <RadzenText TextStyle="TextStyle.Caption">@selectedGTTL?.TenGTTL</RadzenText>
-    </RadzenStack>
-
-    <hr class="rz-m-0" />
-
-    <div>
-        <RadzenLabel Text="Ngày thẩm định *" Style="font-weight: bold; font-size: 13px;" />
-        <RadzenDatePicker @bind-Value="@kqThamDinh.ngayThamDinh" Style="width: 100%;" DateFormat="dd/MM/yyyy" Placeholder="dd/mm/yyyy" />
-    </div>
-
-    <div>
-       @* <RadzenLabel Text="Kết luận *" Style="font-weight: bold; font-size: 13px;" />
-        <RadzenRadioButtonList @bind-Value="@kqThamDinh.ketLuan" TValue="string" Orientation="Orientation.Vertical" Class="rz-w-100">
-            <Items>
-                <RadzenRadioButtonListItem Text="Đạt" Value="Đạt" />
-                <RadzenRadioButtonListItem Text="Cần chỉnh sửa" Value="Cần chỉnh sửa" />
-                <RadzenRadioButtonListItem Text="Không đạt" Value="Không đạt" />
-            </Items>
-        </RadzenRadioButtonList> *@
-    </div>
-
-    <div>
-        <RadzenLabel Text="Nhận xét" Style="font-weight: bold; font-size: 13px;" />
-        <RadzenTextArea @bind-Value="@kqThamDinh.nhanXet" Placeholder="Nhận xét chung về tài liệu..." Style="width: 100%;" Rows="3" />
-    </div>
-
-    <div>
-        <RadzenLabel Text="Biên bản thẩm định *" Style="font-weight: bold; font-size: 13px;" />
-        <RadzenUpload Url="upload/single" Class="custom-upload-box" Multiple="false">
-            <ChildContent>
-                <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-p-4">
-                    <RadzenIcon Icon="cloud_upload" Style="font-size: 30px; color: #aaa;" />
-                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">Tải lên biên bản thẩm định</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline">PDF, DOC, DOCX (tối đa 10MB)</RadzenText>
-                </RadzenStack>
-            </ChildContent>
-        </RadzenUpload>
-    </div>
-
-    <div>
-        <RadzenLabel Text="Phiếu nhận xét (tùy chọn)" Style="font-weight: bold; font-size: 13px;" />
-        <RadzenUpload Url="upload/multiple" Class="custom-upload-box" Multiple="true">
-            <ChildContent>
-                <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-p-4">
-                    <RadzenIcon Icon="cloud_upload" Style="font-size: 30px; color: #aaa;" />
-                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-mb-0">Tải lên các phiếu nhận xét</RadzenText>
-                </RadzenStack>
-            </ChildContent>
-        </RadzenUpload>
-    </div>
-
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="10px" Class="rz-mt-4">
-        <RadzenButton Text="Hủy" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" Style="min-width: 80px;" />
-        <RadzenButton Text="Lưu kết quả" Click="() => ds.Close(true)" ButtonStyle="ButtonStyle.Primary" Style="min-width: 120px;" />
-    </RadzenStack>
-</RadzenStack>
-        , new DialogOptions() { Width = "580px", Resizable = false, Draggable = true });
-
+        await DialogService.OpenAsync<NhapKqThamDinh_Dialog>(
+        "Cập nhật kết quả",
+        new Dictionary<string, object>
+        {
+            { "selectedGTTL", selectedGTTL },
+        },
+        new DialogOptions
+        {
+            Width = "580px",
+            Resizable = false,
+            Draggable = true
+        }
+    );
     }
 }

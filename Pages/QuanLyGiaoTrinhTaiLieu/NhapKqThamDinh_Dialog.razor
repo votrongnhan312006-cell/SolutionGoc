@@ -1,0 +1,148 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using api.Models.QLBienSoan
+@inject DialogService DialogService
+@inject ApiServices apiService
+@inject NotificationService notificationService
+
+
+<RadzenStack Gap="1.2rem" Class="rz-p-2">
+
+    <!-- HEADER -->
+    <RadzenStack Gap="0">
+        <RadzenText TextStyle="TextStyle.H6"
+                    Weight="FontWeight.Bold"
+                    Class="rz-mb-0">
+            Nhập kết quả thẩm định
+        </RadzenText>
+
+        <RadzenText TextStyle="TextStyle.Caption">
+            @selectedGTTL.TenGTTL
+        </RadzenText>
+    </RadzenStack>
+
+    <hr class="rz-m-0" />
+
+    <!-- NGÀY THẨM ĐỊNH -->
+    <div>
+        <RadzenLabel Text="Ngày thẩm định *"
+                     Style="font-weight:bold;font-size:13px" />
+        <RadzenDatePicker @bind-Value="selectedGTTL.NgayThamDinh"
+                          DateFormat="dd/MM/yyyy"
+                          Placeholder="dd/MM/yyyy"
+                          Style="width:100%" />
+    </div>
+
+    <!-- KẾT LUẬN -->
+    <div>
+        <RadzenRadioButtonList TValue="string"
+                               Value="@ketQua.ketLuan"
+                               Orientation="Orientation.Vertical">
+            <Items>
+                <RadzenRadioButtonListItem Text="Đạt" Value="Dat" />
+                <RadzenRadioButtonListItem Text="Không đạt" Value="KhongDat" />
+            </Items>
+        </RadzenRadioButtonList>
+
+    </div>
+
+    <!-- NHẬN XÉT -->
+    <div>
+        <RadzenLabel Text="Nhận xét"
+                     Style="font-weight:bold;font-size:13px" />
+        <RadzenTextArea @bind-Value="ketQua.nhanXet"
+                        Placeholder="Nhận xét chung về tài liệu..."
+                        Rows="3"
+                        Style="width:100%" />
+    </div>
+
+    <!-- BIÊN BẢN -->
+    <div class="row" style="margin-bottom: 16px;">
+            <div class="col-md-12">
+                <RadzenLabel Text="File biên bản thẩm định *" Component="FileQD" Style="margin-bottom: 8px; display: block;" />
+                <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 40px; text-align: center; background-color: #fafafa;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+                    <div style="color: #666; margin-bottom: 8px;">Tải lên biên bản thẩm định</div>
+                    <div style="color: #999; font-size: 12px;">PDF, DOC, DOCX (tối đa 10MB)</div>
+                </div>
+            </div>
+        </div>
+
+    <!-- PHIẾU NHẬN XÉT -->
+    <div class="row" style="margin-bottom: 16px;">
+        <div class="col-md-12">
+            <RadzenLabel Text="File phiếu nhận xét" Component="FileQD" Style="margin-bottom: 8px; display: block;" />
+            <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 40px; text-align: center; background-color: #fafafa;">
+                <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+                <div style="color: #666; margin-bottom: 8px;">Tải lên phiếu nhận xét</div>
+                <div style="color: #999; font-size: 12px;">PDF, DOC, DOCX (tối đa 10MB)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUTTON -->
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.End"
+                 Gap="10px"
+                 Class="rz-mt-4">
+        <RadzenButton Text="Hủy"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="() => DialogService.Close(false)"
+                      Style="min-width:80px" />
+
+        <RadzenButton Text="Lưu kết quả"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="Submit"
+                      Style="min-width:120px" />
+    </RadzenStack>
+
+</RadzenStack>
+
+@code {
+    [Parameter] public tbGTTL? selectedGTTL { get; set; }
+    private tbKetQuaThamDinhNoiDung ketQua = new();
+
+    protected async void Submit()
+    {
+        try
+        {
+            if(selectedGTTL.IdketQuaThamDinh != null)
+            {
+                ketQua.idKetQua = (int)selectedGTTL.IdketQuaThamDinh;
+                await apiService.Update<tbKetQuaThamDinhNoiDung>(ketQua);
+                await apiService.Update<tbGTTL>(selectedGTTL);
+            }
+            else
+            {
+                ketQua.idKetQua = await client.numServices.GetInt<tbKetQuaThamDinhNoiDung>("seq_tbKetQuaThamDinhNoiDung");
+                selectedGTTL.IdketQuaThamDinh = ketQua.idKetQua;
+                await apiService.Create<tbKetQuaThamDinhNoiDung>(ketQua);
+                await apiService.Update<tbGTTL>(selectedGTTL);
+            }
+
+                notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Thành công",
+                    Detail = "Lưu kết quả thẩm định giáo trình/tài liệu thành công.",
+                    Duration = 4000
+                });
+        }
+        catch
+        {
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Lỗi",
+                Detail = "Đã có lỗi xảy ra trong quá trình lưu kết quả.",
+                Duration = 4000
+            });
+        }
+
+        DialogService.Close();
+    }
+    public const string Dat = "Đạt";
+    public const string KhongDat = "Không đạt";
+    
+}
+
